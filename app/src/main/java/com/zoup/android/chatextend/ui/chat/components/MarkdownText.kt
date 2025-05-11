@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend
+package com.zoup.android.chatextend.ui.chat.components
 
 import android.content.Context
 import android.util.AttributeSet

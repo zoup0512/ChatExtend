@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend
+package com.zoup.android.chatextend.data.api
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

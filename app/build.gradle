@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
 android {
@@ -22,6 +23,14 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 从 local.properties 读取 API 密钥
+            buildConfigField "String", "DEEPSEEK_API_KEY", '"sk-fbcbc2bfaec74a71b948a5e6ad6cfc4a"'
+        }
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 从 local.properties 读取 API 密钥
+            buildConfigField "String", "DEEPSEEK_API_KEY", '"sk-fbcbc2bfaec74a71b948a5e6ad6cfc4a"'
         }
     }
     compileOptions {
@@ -33,7 +42,8 @@ android {
     }
     buildFeatures {
         viewBinding true
-        compose = true
+        compose true
+        buildConfig true
     }
     // 常规配置...
 //    buildFeatures {
@@ -67,6 +77,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2") // 或更高版本
 
     // Markwon for Markdown rendering
     implementation("io.noties.markwon:core:4.6.2")
@@ -78,10 +89,15 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Glide for images
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // JSON 序列化
+    implementation(libs.kotlinx.serialization.json)
 }

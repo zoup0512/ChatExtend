@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.home
+package com.zoup.android.chatextend.ui.chat
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

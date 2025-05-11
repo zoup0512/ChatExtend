@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.home
+package com.zoup.android.chatextend.ui.chat
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,8 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.zoup.android.chatextend.ChatScreen
-import com.zoup.android.chatextend.ChatViewModel
+import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {

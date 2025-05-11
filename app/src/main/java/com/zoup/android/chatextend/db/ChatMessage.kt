@@ -1,3 +1,5 @@
+package com.zoup.android.chatextend.db
+
 import androidx.compose.runtime.Immutable
 
 @Immutable
