@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -100,4 +101,8 @@ dependencies {
 
     // JSON 序列化
     implementation(libs.kotlinx.serialization.json)
+
+    implementation "androidx.room:room-runtime:2.7.1"
+    ksp "androidx.room:room-compiler:2.7.1" // ✅ 使用 ksp 替代 kapt，并升级版本
+
 }

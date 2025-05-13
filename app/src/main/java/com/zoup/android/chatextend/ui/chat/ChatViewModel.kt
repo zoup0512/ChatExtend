@@ -8,7 +8,7 @@ import com.zoup.android.chatextend.data.api.ApiClient
 import com.zoup.android.chatextend.data.api.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.DeepSeekStreamResponse
 import com.zoup.android.chatextend.data.api.Message
-import com.zoup.android.chatextend.db.ChatMessage
+import com.zoup.android.chatextend.data.db.ChatMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

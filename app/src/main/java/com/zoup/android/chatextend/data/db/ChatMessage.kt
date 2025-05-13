@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.db
+package com.zoup.android.chatextend.data.db
 
 import androidx.compose.runtime.Immutable
 

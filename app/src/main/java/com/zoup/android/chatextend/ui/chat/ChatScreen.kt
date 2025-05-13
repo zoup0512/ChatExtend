@@ -48,9 +48,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.ui.chat.components.MarkdownText
-import com.zoup.android.chatextend.db.ChatMessage
+import com.zoup.android.chatextend.data.db.ChatMessage
 import io.noties.markwon.Markwon
 
 @OptIn(ExperimentalMaterial3Api::class)
