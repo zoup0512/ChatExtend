@@ -15,10 +15,9 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
     private var _chatState = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
 
-    fun sendMessage(userInput: String): MutableStateFlow<ChatState> {
+    fun sendMessage(userInput: String) {
         viewModelScope.launch {
-            _chatState=chatRepository.sendMessage(userInput)
+            _chatState = chatRepository.sendMessage(userInput, _chatState)
         }
-        return _chatState
     }
 }

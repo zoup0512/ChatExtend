@@ -15,7 +15,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.data.repository.ChatRepository
-import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {

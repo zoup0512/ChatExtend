@@ -30,7 +30,7 @@ data class DeepSeekStreamResponse(
     @SerialName("model") val model: String,
     @SerialName("system_fingerprint") val systemFingerprint: String,
     @SerialName("choices") val choices: List<StreamChoice>,
-    @SerialName("usage") val usage: Usage?
+    @SerialName("usage") val usage: Usage? = null
 )
 
 @Serializable

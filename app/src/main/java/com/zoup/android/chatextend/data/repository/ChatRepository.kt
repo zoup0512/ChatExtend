@@ -11,7 +11,6 @@ import com.zoup.android.chatextend.data.database.ChatMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -24,19 +23,18 @@ import java.util.UUID
  * 它通过依赖注入的方式获取网络服务（DeepSeekApiService）、数据库访问对象（ChatMessageDao）以及 API 密钥。
  */
 class ChatRepository() {
-    // 聊天消息状态
-    private val _chatState = MutableStateFlow(ChatState())
-    val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
-
     /**
      * 发送消息到 DeepSeek API
      */
-    suspend fun sendMessage(userInput: String): MutableStateFlow<ChatState> {
+    suspend fun sendMessage(
+        userInput: String,
+        chatState: MutableStateFlow<ChatState>
+    ): MutableStateFlow<ChatState> {
         val userMessageId = UUID.randomUUID().toString()
         val assistantMessageId = UUID.randomUUID().toString()
 
         // 更新状态：添加用户消息和占位符助手消息
-        _chatState.update { state ->
+        chatState.update { state ->
             state.copy(
                 messages = state.messages + listOf(
                     ChatMessage.UserMessage(
@@ -58,7 +56,7 @@ class ChatRepository() {
                 // 构建 API 请求
                 val request = DeepSeekRequest(
                     model = "deepseek-chat",
-                    messages = buildMessagesList(userInput),
+                    messages = buildMessagesList(userInput, chatState),
                     stream = true
                 )
                 // 发起流式请求
@@ -75,23 +73,27 @@ class ChatRepository() {
                 // 处理流式响应
                 processStreamResponse(
                     body = response.body()!!,
-                    messageId = assistantMessageId
+                    messageId = assistantMessageId,
+                    chatState = chatState
                 )
             } catch (e: Exception) {
-                handleError(e, assistantMessageId)
+                handleError(e, assistantMessageId, chatState)
             } finally {
-                _chatState.update { it.copy(isLoading = false) }
+                chatState.update { it.copy(isLoading = false) }
             }
         }
 
-        return _chatState
+        return chatState
     }
 
     /**
      * 构建消息历史列表
      */
-    private fun buildMessagesList(newMessage: String): List<Message> {
-        return _chatState.value.messages
+    private fun buildMessagesList(
+        newMessage: String,
+        chatState: StateFlow<ChatState>
+    ): List<Message> {
+        return chatState.value.messages
             .filterNot { it is ChatMessage.AssistantMessage && it.isPending }
             .map {
                 Message(
@@ -109,7 +111,8 @@ class ChatRepository() {
      */
     private suspend fun processStreamResponse(
         body: ResponseBody,
-        messageId: String
+        messageId: String,
+        chatState: MutableStateFlow<ChatState>
     ) = withContext(Dispatchers.IO) {
         val reader = body.byteStream().bufferedReader()
         var accumulatedContent = ""
@@ -126,7 +129,8 @@ class ChatRepository() {
                                 updateAssistantMessage(
                                     messageId = messageId,
                                     content = accumulatedContent,
-                                    isPending = true
+                                    isPending = true,
+                                    chatState = chatState
                                 )
                             }
                         }
@@ -138,13 +142,15 @@ class ChatRepository() {
             updateAssistantMessage(
                 messageId = messageId,
                 content = accumulatedContent,
-                isPending = false
+                isPending = false,
+                chatState = chatState
             )
         } catch (e: Exception) {
             updateAssistantMessage(
                 messageId = messageId,
                 content = "Error: ${e.localizedMessage}",
-                isPending = false
+                isPending = false,
+                chatState = chatState
             )
         } finally {
             body.close()
@@ -170,9 +176,10 @@ class ChatRepository() {
     private fun updateAssistantMessage(
         messageId: String,
         content: String,
-        isPending: Boolean
+        isPending: Boolean,
+        chatState: MutableStateFlow<ChatState>
     ) {
-        _chatState.update { state ->
+        chatState.update { state ->
             val updatedMessages = state.messages.map {
                 if (it.id == messageId && it is ChatMessage.AssistantMessage) {
                     it.copy(
@@ -190,7 +197,11 @@ class ChatRepository() {
     /**
      * 错误处理
      */
-    private fun handleError(e: Exception, messageId: String) {
+    private fun handleError(
+        e: Exception,
+        messageId: String,
+        chatState: MutableStateFlow<ChatState>
+    ) {
         val errorMessage = when (e) {
             is HttpException -> "API Error: ${e.code()} - ${e.response()?.errorBody()?.string()}"
             else -> "Network Error: ${e.localizedMessage}"
@@ -199,15 +210,16 @@ class ChatRepository() {
         updateAssistantMessage(
             messageId = messageId,
             content = errorMessage,
-            isPending = false
+            isPending = false,
+            chatState = chatState
         )
     }
 
     /**
      * 清空聊天
      */
-    fun clearChat() {
-        _chatState.update { ChatState() }
+    fun clearChat(chatState: MutableStateFlow<ChatState>) {
+        chatState.update { ChatState() }
     }
 
     // 数据模型
