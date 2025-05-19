@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.chat
+package com.zoup.android.chatextend.ui.history
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,11 +16,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatRepository
-import com.zoup.android.chatextend.databinding.FragmentHomeBinding
+import com.zoup.android.chatextend.databinding.FragmentHistoryBinding
+import com.zoup.android.chatextend.ui.chat.ChatViewModel
+import com.zoup.android.chatextend.ui.chat.HomeViewModel
 
-class HomeFragment : Fragment() {
+class HistoryFragment : Fragment() {
 
-    private var _binding: FragmentHomeBinding? = null
+    private var _binding: FragmentHistoryBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -47,7 +49,7 @@ class HomeFragment : Fragment() {
         val homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
 
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentHistoryBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textHome
@@ -62,7 +64,7 @@ class HomeFragment : Fragment() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        ChatScreen(viewModel = viewModel)
+                        HistoryScreen(viewModel = viewModel)
                     }
                 }
             }

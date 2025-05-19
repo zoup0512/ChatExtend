@@ -17,7 +17,7 @@ abstract class AppDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "chat_database"
+                    "chat_db"
                 ).build().also { instance = it }
             }
         }

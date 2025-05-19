@@ -112,4 +112,8 @@ dependencies {
 
     implementation 'com.tencent.bugly:crashreport:latest.release'
 
+    // Koin (可选)
+    implementation "io.insert-koin:koin-android:3.4.0"
+    implementation "io.insert-koin:koin-androidx-compose:3.4.0"
+
 }

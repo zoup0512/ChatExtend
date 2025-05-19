@@ -12,5 +12,8 @@ data class ChatMessageEntity(
     val content: String,
     val timestamp: Long = Date().time,
     val isPending: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+
+    // 新增字段：用于标识所属会话
+    val sessionId: String = UUID.randomUUID().toString() // 可以在新会话开始时生成
 )
