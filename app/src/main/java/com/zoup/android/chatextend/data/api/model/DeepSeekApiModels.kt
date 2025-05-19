@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.data.api
+package com.zoup.android.chatextend.data.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -29,7 +29,8 @@ data class DeepSeekStreamResponse(
     @SerialName("created") val created: Long,
     @SerialName("model") val model: String,
     @SerialName("system_fingerprint") val systemFingerprint: String,
-    @SerialName("choices") val choices: List<StreamChoice>
+    @SerialName("choices") val choices: List<StreamChoice>,
+    @SerialName("usage") val usage: Usage?
 )
 
 @Serializable
@@ -37,7 +38,22 @@ data class StreamChoice(
     @SerialName("delta") val delta: MessageDelta,
     @SerialName("index") val index: Int,
     @SerialName("finish_reason") val finishReason: String?,
-    @SerialName("logprobs") val logprobs: String?
+    @SerialName("logprobs") val logprobs: String?,
+)
+
+@Serializable
+data class Usage(
+    @SerialName("prompt_tokens") val promptTokens: Int,
+    @SerialName("completion_tokens") val completionTokens: Int,
+    @SerialName("total_tokens") val totalTokens: Int,
+    @SerialName("prompt_tokens_details") val promptTokensDetails: PromptTokensDetails?,
+    @SerialName("prompt_cache_hit_tokens") val promptCacheHitTokens: Int,
+    @SerialName("prompt_cache_miss_tokens") val promptCacheMissTokens: Int,
+)
+
+@Serializable
+data class PromptTokensDetails(
+    @SerialName("cached_tokens") val cachedTokens: Int,
 )
 
 @Serializable

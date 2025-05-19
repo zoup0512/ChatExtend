@@ -1,220 +1,24 @@
 package com.zoup.android.chatextend.ui.chat
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zoup.android.chatextend.BuildConfig
-import com.zoup.android.chatextend.data.api.ApiClient
-import com.zoup.android.chatextend.data.api.DeepSeekRequest
-import com.zoup.android.chatextend.data.api.DeepSeekStreamResponse
-import com.zoup.android.chatextend.data.api.Message
-import com.zoup.android.chatextend.data.db.ChatMessage
-import kotlinx.coroutines.Dispatchers
+import com.zoup.android.chatextend.data.repository.ChatRepository
+import com.zoup.android.chatextend.data.repository.ChatRepository.ChatState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import okhttp3.ResponseBody
-import retrofit2.HttpException
-import java.util.UUID
-import kotlin.collections.plus
 
-class ChatViewModel : ViewModel() {
+class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
 
     // 聊天消息状态
-    private val _chatState = MutableStateFlow(ChatState())
+    private var _chatState = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
 
-    // API 服务
-    private val apiService = ApiClient.deepSeekApiService
-
-    /**
-     * 发送消息到 DeepSeek API
-     */
-    fun sendMessage(userInput: String) {
-        val userMessageId = UUID.randomUUID().toString()
-        val assistantMessageId = UUID.randomUUID().toString()
-
-        // 更新状态：添加用户消息和占位符助手消息
-        _chatState.update { state ->
-            state.copy(
-                messages = state.messages + listOf(
-                    ChatMessage.UserMessage(
-                        id = userMessageId,
-                        content = userInput
-                    ),
-                    ChatMessage.AssistantMessage(
-                        id = assistantMessageId,
-                        content = "",
-                        isPending = true
-                    )
-                ),
-                isLoading = true
-            )
-        }
-
+    fun sendMessage(userInput: String): MutableStateFlow<ChatState> {
         viewModelScope.launch {
-            try {
-                // 构建 API 请求
-                val request = DeepSeekRequest(
-                    model = "deepseek-chat",
-                    messages = buildMessagesList(userInput),
-                    stream = true
-                )
-               Log.d("ChatViewModel" , request.toString())
-                // 发起流式请求
-                val response = apiService.createChatCompletion(
-                    authorization = "Bearer ${BuildConfig.DEEPSEEK_API_KEY}",
-                    request = request
-                )
-
-                if (!response.isSuccessful) {
-                    throw HttpException(response)
-                }
-
-                // 处理流式响应
-                processStreamResponse(
-                    body = response.body()!!,
-                    messageId = assistantMessageId
-                )
-            } catch (e: Exception) {
-                handleError(e, assistantMessageId)
-            } finally {
-                _chatState.update { it.copy(isLoading = false) }
-            }
+            _chatState=chatRepository.sendMessage(userInput)
         }
+        return _chatState
     }
-
-    /**
-     * 构建消息历史列表
-     */
-    private fun buildMessagesList(newMessage: String): List<Message> {
-        return _chatState.value.messages
-            .filterNot { it is ChatMessage.AssistantMessage && it.isPending }
-            .map {
-                Message(
-                    role = when (it) {
-                        is ChatMessage.UserMessage -> "user"
-                        is ChatMessage.AssistantMessage -> "assistant"
-                    },
-                    content = it.content
-                )
-            } + Message(role = "user", content = newMessage)
-    }
-
-    /**
-     * 处理流式响应
-     */
-    private suspend fun processStreamResponse(
-        body: ResponseBody,
-        messageId: String
-    ) = withContext(Dispatchers.IO) {
-        val reader = body.byteStream().bufferedReader()
-        var accumulatedContent = ""
-
-        try {
-            reader.useLines { lines ->
-                lines.forEach { line ->
-                    if (line.startsWith("data:") && !line.contains("[DONE]")) {
-                        val json = line.substringAfter("data:").trim()
-                        if (json.isNotEmpty()) {
-                            val content = parseStreamChunk(json)
-                            if (content.isNotEmpty()) {
-                                accumulatedContent += content
-                                updateAssistantMessage(
-                                    messageId = messageId,
-                                    content = accumulatedContent,
-                                    isPending = true
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 流式接收完成
-            updateAssistantMessage(
-                messageId = messageId,
-                content = accumulatedContent,
-                isPending = false
-            )
-        } catch (e: Exception) {
-            updateAssistantMessage(
-                messageId = messageId,
-                content = "Error: ${e.localizedMessage}",
-                isPending = false
-            )
-        } finally {
-            body.close()
-        }
-    }
-
-    /**
-     * 解析流式数据块
-     */
-    private fun parseStreamChunk(json: String): String {
-        return try {
-            val response = Json.Default.decodeFromString<DeepSeekStreamResponse>(json)
-            response.choices.firstOrNull()?.delta?.content ?: ""
-        } catch (e: Exception) {
-           Log.e("ChatViewModel", e.toString())
-            ""
-        }
-    }
-
-    /**
-     * 更新助手消息
-     */
-    private fun updateAssistantMessage(
-        messageId: String,
-        content: String,
-        isPending: Boolean
-    ) {
-        _chatState.update { state ->
-            val updatedMessages = state.messages.map {
-                if (it.id == messageId && it is ChatMessage.AssistantMessage) {
-                    it.copy(
-                        content = content,
-                        isPending = isPending
-                    )
-                } else {
-                    it
-                }
-            }
-            state.copy(messages = updatedMessages)
-        }
-    }
-
-    /**
-     * 错误处理
-     */
-    private fun handleError(e: Exception, messageId: String) {
-        val errorMessage = when (e) {
-            is HttpException -> "API Error: ${e.code()} - ${e.response()?.errorBody()?.string()}"
-            else -> "Network Error: ${e.localizedMessage}"
-        }
-
-        updateAssistantMessage(
-            messageId = messageId,
-            content = errorMessage,
-            isPending = false
-        )
-    }
-
-    /**
-     * 清空聊天
-     */
-    fun clearChat() {
-        _chatState.update { ChatState() }
-    }
-
-    // 数据模型
-    data class ChatState(
-        val messages: List<ChatMessage> = emptyList(),
-        val isLoading: Boolean = false
-    )
-
 }

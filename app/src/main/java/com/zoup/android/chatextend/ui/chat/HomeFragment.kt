@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.databinding.FragmentHomeBinding
 
@@ -28,7 +29,8 @@ class HomeFragment : Fragment() {
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return ChatViewModel() as T
+                    val repository = ChatRepository()
+                    return ChatViewModel(repository) as T
                 }
             }
         }

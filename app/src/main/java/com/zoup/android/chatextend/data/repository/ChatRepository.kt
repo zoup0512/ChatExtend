@@ -1,132 +1,218 @@
 package com.zoup.android.chatextend.data.repository
 
+// 导入必要的模块和类
+import android.util.Log
+import com.zoup.android.chatextend.BuildConfig
 import com.zoup.android.chatextend.data.api.DeepSeekApiService
-import com.zoup.android.chatextend.data.db.ChatMessageDao
-import com.zoup.android.chatextend.data.db.ChatMessageEntity
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
+import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
+import com.zoup.android.chatextend.data.api.model.Message
+import com.zoup.android.chatextend.data.database.ChatMessage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import okhttp3.ResponseBody
 import retrofit2.HttpException
-import java.io.IOException
 import java.util.UUID
 
-class ChatRepository(
-    private val apiService: DeepSeekApiService,
-    private val chatMessageDao: ChatMessageDao,
-    private val apiKey: String
-)
-{
-//    fun getAllMessages(): Flow<List<ChatMessageEntity>> {
-//        return chatMessageDao.getAllMessages()
-//    }
-//
-//    suspend fun sendMessage(content: String, retryCount: Int = 3): Flow<ApiResponse<String>> = flow {
-//        // Save user message
-//        val userMessage = ChatMessageEntity(
-//            role = "user",
-//            content = content,
-//            isPending = false
-//        )
-//        chatMessageDao.insertMessage(userMessage)
-//
-//        // Create assistant pending message
-//        val assistantMessageId = UUID.randomUUID().toString()
-//        val assistantMessage = ChatMessageEntity(
-//            id = assistantMessageId,
-//            role = "assistant",
-//            content = "",
-//            isPending = true
-//        )
-//        chatMessageDao.insertMessage(assistantMessage)
-//
-//        var currentRetry = 0
-//        var lastError: Exception? = null
-//
-//        while (currentRetry < retryCount) {
-//            try {
-//                val request = ChatRequest(
-//                    messages = listOf(
-//                        ChatMessage(role = "user", content = content)
-//                    )
-//                )
-//
-//                apiService.sendMessageStream(apiKey, request).collect { responseBody ->
-//                    val buffer = StringBuilder()
-//                    responseBody.byteStream().bufferedReader().use { reader ->
-//                        var line: String?
-//                        while (reader.readLine().also { line = it } != null) {
-//                            if (line?.startsWith("data:") == true) {
-//                                val json = line!!.substring(5).trim()
-//                                if (json != "[DONE]") {
-//                                    try {
-//                                        val chatResponse = parseStreamResponse(json)
-//                                        val deltaContent = chatResponse.choices[0].delta?.content ?: ""
-//                                        buffer.append(deltaContent)
-//
-//                                        // Update message in DB
-//                                        chatMessageDao.updateMessage(
-//                                            assistantMessage.copy(content = buffer.toString())
-//                                        )
-//                                    } catch (e: Exception) {
-//                                        // Log parsing error but continue
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    // Final update when stream is complete
-//                    chatMessageDao.updateMessage(
-//                        assistantMessage.copy(
-//                            content = buffer.toString(),
-//                            isPending = false
-//                        )
-//                    )
-//                    emit(ApiResponse.Success(buffer.toString()))
-//                }
-//
-//                // If we get here, the request was successful
-//                return@flow
-//            } catch (e: Exception) {
-//                lastError = e
-//                currentRetry++
-//
-//                if (currentRetry < retryCount) {
-//                    // Wait before retrying
-//                    kotlinx.coroutines.delay(1000L * currentRetry)
-//                }
-//            }
-//        }
-//
-//        // If we get here, all retries failed
-//        val errorMessage = when (lastError) {
-//            is HttpException -> "HTTP error: ${lastError.code()}"
-//            is IOException -> "Network error: ${lastError.message}"
-//            else -> "Error: ${lastError?.message ?: "Unknown error"}"
-//        }
-//
-//        // Update message with error
-//        chatMessageDao.updateMessage(
-//            assistantMessage.copy(
-//                isPending = false,
-//                error = errorMessage
-//            )
-//        )
-//
-//        emit(ApiResponse.Error(errorMessage))
-//    }
-//
-//    suspend fun clearChat() {
-//        chatMessageDao.clearAllMessages()
-//    }
-//
-//    private fun parseStreamResponse(json: String): ChatResponse {
-//        // Implement JSON parsing for stream response
-//        // This is a simplified version - you should use a proper JSON parser
-//        // and handle all fields properly
-//        return ChatResponse(
-//            id = "",
-//            choices = listOf(Choice(delta = ChatMessage(role = "assistant", content = json), index = 0, finish_reason = null)),
-//            created = 0
-//        )
-//    }
+/**
+ * ChatRepository 类用于处理与聊天相关的业务逻辑，包括消息的发送、接收、重试机制等。
+ * 它通过依赖注入的方式获取网络服务（DeepSeekApiService）、数据库访问对象（ChatMessageDao）以及 API 密钥。
+ */
+class ChatRepository() {
+    // 聊天消息状态
+    private val _chatState = MutableStateFlow(ChatState())
+    val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
+
+    /**
+     * 发送消息到 DeepSeek API
+     */
+    suspend fun sendMessage(userInput: String): MutableStateFlow<ChatState> {
+        val userMessageId = UUID.randomUUID().toString()
+        val assistantMessageId = UUID.randomUUID().toString()
+
+        // 更新状态：添加用户消息和占位符助手消息
+        _chatState.update { state ->
+            state.copy(
+                messages = state.messages + listOf(
+                    ChatMessage.UserMessage(
+                        id = userMessageId,
+                        content = userInput
+                    ),
+                    ChatMessage.AssistantMessage(
+                        id = assistantMessageId,
+                        content = "",
+                        isPending = true
+                    )
+                ),
+                isLoading = true
+            )
+        }
+
+        withContext (Dispatchers.IO) {
+            try {
+                // 构建 API 请求
+                val request = DeepSeekRequest(
+                    model = "deepseek-chat",
+                    messages = buildMessagesList(userInput),
+                    stream = true
+                )
+                // 发起流式请求
+                val apiService = DeepSeekApiService.create()
+                val response = apiService.createChatCompletion(
+                    authorization = "Bearer ${BuildConfig.DEEPSEEK_API_KEY}",
+                    request = request
+                )
+
+                if (!response.isSuccessful) {
+                    throw HttpException(response)
+                }
+
+                // 处理流式响应
+                processStreamResponse(
+                    body = response.body()!!,
+                    messageId = assistantMessageId
+                )
+            } catch (e: Exception) {
+                handleError(e, assistantMessageId)
+            } finally {
+                _chatState.update { it.copy(isLoading = false) }
+            }
+        }
+
+        return _chatState
+    }
+
+    /**
+     * 构建消息历史列表
+     */
+    private fun buildMessagesList(newMessage: String): List<Message> {
+        return _chatState.value.messages
+            .filterNot { it is ChatMessage.AssistantMessage && it.isPending }
+            .map {
+                Message(
+                    role = when (it) {
+                        is ChatMessage.UserMessage -> "user"
+                        is ChatMessage.AssistantMessage -> "assistant"
+                    },
+                    content = it.content
+                )
+            } + Message(role = "user", content = newMessage)
+    }
+
+    /**
+     * 处理流式响应
+     */
+    private suspend fun processStreamResponse(
+        body: ResponseBody,
+        messageId: String
+    ) = withContext(Dispatchers.IO) {
+        val reader = body.byteStream().bufferedReader()
+        var accumulatedContent = ""
+
+        try {
+            reader.useLines { lines ->
+                lines.forEach { line ->
+                    if (line.startsWith("data:") && !line.contains("[DONE]")) {
+                        val json = line.substringAfter("data:").trim()
+                        if (json.isNotEmpty()) {
+                            val content = parseStreamChunk(json)
+                            if (content.isNotEmpty()) {
+                                accumulatedContent += content
+                                updateAssistantMessage(
+                                    messageId = messageId,
+                                    content = accumulatedContent,
+                                    isPending = true
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 流式接收完成
+            updateAssistantMessage(
+                messageId = messageId,
+                content = accumulatedContent,
+                isPending = false
+            )
+        } catch (e: Exception) {
+            updateAssistantMessage(
+                messageId = messageId,
+                content = "Error: ${e.localizedMessage}",
+                isPending = false
+            )
+        } finally {
+            body.close()
+        }
+    }
+
+    /**
+     * 解析流式数据块
+     */
+    private fun parseStreamChunk(json: String): String {
+        return try {
+            val response = Json.Default.decodeFromString<DeepSeekStreamResponse>(json)
+            response.choices.firstOrNull()?.delta?.content ?: ""
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", e.toString())
+            ""
+        }
+    }
+
+    /**
+     * 更新助手消息
+     */
+    private fun updateAssistantMessage(
+        messageId: String,
+        content: String,
+        isPending: Boolean
+    ) {
+        _chatState.update { state ->
+            val updatedMessages = state.messages.map {
+                if (it.id == messageId && it is ChatMessage.AssistantMessage) {
+                    it.copy(
+                        content = content,
+                        isPending = isPending
+                    )
+                } else {
+                    it
+                }
+            }
+            state.copy(messages = updatedMessages)
+        }
+    }
+
+    /**
+     * 错误处理
+     */
+    private fun handleError(e: Exception, messageId: String) {
+        val errorMessage = when (e) {
+            is HttpException -> "API Error: ${e.code()} - ${e.response()?.errorBody()?.string()}"
+            else -> "Network Error: ${e.localizedMessage}"
+        }
+
+        updateAssistantMessage(
+            messageId = messageId,
+            content = errorMessage,
+            isPending = false
+        )
+    }
+
+    /**
+     * 清空聊天
+     */
+    fun clearChat() {
+        _chatState.update { ChatState() }
+    }
+
+    // 数据模型
+    data class ChatState(
+        val messages: List<ChatMessage> = emptyList(),
+        val isLoading: Boolean = false
+    )
 }

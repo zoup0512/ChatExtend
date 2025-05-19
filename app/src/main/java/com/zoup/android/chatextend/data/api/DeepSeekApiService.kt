@@ -1,5 +1,6 @@
 package com.zoup.android.chatextend.data.api
 
+import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -13,4 +14,11 @@ interface DeepSeekApiService {
         @Header("Authorization") authorization: String,
         @Body request: DeepSeekRequest  // 使用定义好的请求体
     ): retrofit2.Response<ResponseBody>  // 返回原始响应体
+
+    companion object{
+        fun create(): DeepSeekApiService {
+            val retrofit = ApiClient.retrofit
+            return retrofit.create(DeepSeekApiService::class.java)
+        }
+    }
 }

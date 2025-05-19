@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.data.db
+package com.zoup.android.chatextend.data.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
