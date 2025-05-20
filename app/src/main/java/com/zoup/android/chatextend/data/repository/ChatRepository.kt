@@ -10,6 +10,7 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.ChatMessage
 import com.zoup.android.chatextend.data.database.ChatMessageDao
 import com.zoup.android.chatextend.data.database.ChatMessageEntity
+import com.zoup.android.chatextend.utils.formatTimestamp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,22 +54,22 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                 isLoading = true
             )
         }
-
+        val sessionId=generateSessionId()
         // 保存用户消息到数据库
         chatMessageDao.insertMessage(
             ChatMessageEntity(
-                id = userMessageId,
                 role = "user",
-                content = userInput
+                content = userInput,
+                sessionId = sessionId
             )
         )
 
         chatMessageDao.insertMessage(
             ChatMessageEntity(
-                id = assistantMessageId,
                 role = "assistant",
                 content = "",
-                isPending = true
+                isPending = true,
+                sessionId = sessionId
             )
         )
         withContext (Dispatchers.IO) {
@@ -216,10 +217,10 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         // 更新数据库中的助手消息
         chatMessageDao.updateMessage(
             ChatMessageEntity(
-                id = messageId,
                 role = "assistant",
                 content = content,
-                isPending = isPending
+                isPending = isPending,
+                sessionId = messageId
             )
         )
     }
@@ -301,4 +302,9 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         val messages: List<ChatMessage> = emptyList(),
         val isLoading: Boolean = false
     )
+
+    fun generateSessionId(): String {
+        val randomSuffix = UUID.randomUUID().toString()
+        return randomSuffix
+    }
 }
