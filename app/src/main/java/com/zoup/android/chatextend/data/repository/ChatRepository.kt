@@ -2,7 +2,6 @@ package com.zoup.android.chatextend.data.repository
 
 // 导入必要的模块和类
 import android.util.Log
-import com.zoup.android.chatextend.BuildConfig
 import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
@@ -10,7 +9,8 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.ChatMessage
 import com.zoup.android.chatextend.data.database.ChatMessageDao
 import com.zoup.android.chatextend.data.database.ChatMessageEntity
-import com.zoup.android.chatextend.utils.formatTimestamp
+import com.zoup.android.chatextend.utils.Constants
+import com.zoup.android.chatextend.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,9 +54,9 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                 isLoading = true
             )
         }
-        val sessionId=generateSessionId()
+        val sessionId=SessionManager.generateCurrentSessionId()
         // 保存用户消息到数据库
-        chatMessageDao.insertMessage(
+        chatMessageDao.updateMessage(
             ChatMessageEntity(
                 role = "user",
                 content = userInput,
@@ -64,14 +64,14 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             )
         )
 
-        chatMessageDao.insertMessage(
-            ChatMessageEntity(
-                role = "assistant",
-                content = "",
-                isPending = true,
-                sessionId = sessionId
-            )
-        )
+//        chatMessageDao.insertMessage(
+//            ChatMessageEntity(
+//                role = "assistant",
+//                content = "",
+//                isPending = true,
+//                sessionId = sessionId
+//            )
+//        )
         withContext (Dispatchers.IO) {
             try {
                 // 构建 API 请求
@@ -83,7 +83,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                 // 发起流式请求
                 val apiService = DeepSeekApiService.create()
                 val response = apiService.createChatCompletion(
-                    authorization = "Bearer ${BuildConfig.DEEPSEEK_API_KEY}",
+                    authorization = "Bearer "+Constants.DEEPSEEK_API_KEY,
                     request = request
                 )
 
