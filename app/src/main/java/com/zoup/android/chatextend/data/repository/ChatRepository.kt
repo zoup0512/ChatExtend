@@ -2,6 +2,7 @@ package com.zoup.android.chatextend.data.repository
 
 // 导入必要的模块和类
 import android.util.Log
+import com.google.gson.Gson
 import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
@@ -9,8 +10,9 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageDao
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
+import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.Constants
-import com.zoup.android.chatextend.utils.SessionManager
+import com.zoup.android.chatextend.utils.MessageIdManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,19 +36,22 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         userInput: String,
         chatState: MutableStateFlow<ChatState>
     ): MutableStateFlow<ChatState> {
-        val userMessageId = UUID.randomUUID().toString()
-        val assistantMessageId = UUID.randomUUID().toString()
-
+        var messageId = MessageIdManager.currentMessageId
+        if (messageId.isNullOrEmpty()) {
+            val newMessageId = UUID.randomUUID().toString()
+            messageId = newMessageId
+            MessageIdManager.currentMessageId=  newMessageId
+        }
         // 更新状态：添加用户消息和占位符助手消息
         chatState.update { state ->
             state.copy(
                 messages = state.messages + listOf(
                     ChatMessage.UserMessage(
-                        id = userMessageId,
+                        id = messageId,
                         content = userInput
                     ),
                     ChatMessage.AssistantMessage(
-                        id = assistantMessageId,
+                        id = messageId,
                         content = "",
                         isPending = true
                     )
@@ -54,38 +59,26 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                 isLoading = true
             )
         }
-        val sessionId=SessionManager.generateCurrentSessionId()
-        // 保存用户消息到数据库
+        val newMessages = buildMessagesListWithInput(userInput, chatState)
         chatMessageDao.updateMessage(
             ChatMessageEntity(
-                role = "user",
-                content = userInput,
-                sessionId = sessionId,
-                questionId = 0
+                id = messageId,
+                content = Gson().toJson(newMessages).toString()
             )
         )
 
-        chatMessageDao.insertMessage(
-            ChatMessageEntity(
-                role = "assistant",
-                content = "",
-                isPending = true,
-                sessionId = sessionId,
-                answerId = 0
-            )
-        )
-        withContext (Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             try {
                 // 构建 API 请求
                 val request = DeepSeekRequest(
                     model = "deepseek-chat",
-                    messages = buildMessagesList(userInput, chatState),
+                    messages = newMessages,
                     stream = true
                 )
                 // 发起流式请求
                 val apiService = DeepSeekApiService.create()
                 val response = apiService.createChatCompletion(
-                    authorization = "Bearer "+Constants.DEEPSEEK_API_KEY,
+                    authorization = "Bearer " + Constants.DEEPSEEK_API_KEY,
                     request = request
                 )
 
@@ -96,11 +89,11 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                 // 处理流式响应
                 processStreamResponse(
                     body = response.body()!!,
-                    messageId = assistantMessageId,
+                    messageId = messageId,
                     chatState = chatState
                 )
             } catch (e: Exception) {
-                handleError(e, assistantMessageId, chatState)
+                handleError(e, messageId, chatState)
             } finally {
                 chatState.update { it.copy(isLoading = false) }
             }
@@ -112,7 +105,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
     /**
      * 构建消息历史列表
      */
-    private fun buildMessagesList(
+    private fun buildMessagesListWithInput(
         newMessage: String,
         chatState: StateFlow<ChatState>
     ): List<Message> {
@@ -127,6 +120,25 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                     content = it.content
                 )
             } + Message(role = "user", content = newMessage)
+    }
+
+    /**
+     * 构建消息历史列表
+     */
+    private fun buildMessagesListWithChatState(
+        chatState: StateFlow<ChatState>
+    ): List<Message> {
+        return chatState.value.messages
+            .filterNot { it is ChatMessage.AssistantMessage && it.isPending }
+            .map {
+                Message(
+                    role = when (it) {
+                        is ChatMessage.UserMessage -> "user"
+                        is ChatMessage.AssistantMessage -> "assistant"
+                    },
+                    content = it.content
+                )
+            }
     }
 
     /**
@@ -219,10 +231,8 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         // 更新数据库中的助手消息
         chatMessageDao.updateMessage(
             ChatMessageEntity(
-                role = "assistant",
-                content = content,
-                isPending = isPending,
-                sessionId = messageId
+                id=messageId,
+                content = buildContentWithChatState(chatState)
             )
         )
     }
@@ -262,47 +272,11 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         return chatMessageDao.getAllMessages()
     }
 
-    /**
-     * 从某条历史消息出发，加载整个会话
-     */
-    suspend fun resumeChatFromHistory(historyMessage: ChatMessageEntity): MutableStateFlow<ChatState> {
-        // 从数据库中查询该 sessionId 下的所有消息（假设未来添加了 sessionId）
-        val sessionMessages = chatMessageDao.getMessagesBySessionId(historyMessage.sessionId)
-
-        val messages = sessionMessages.map { msg ->
-            if (msg.role == "user") {
-                ChatMessage.UserMessage(msg.id, msg.content)
-            } else {
-                ChatMessage.AssistantMessage(msg.id, msg.content, isPending = false)
-            }
-        }
-
-        return MutableStateFlow(ChatState(messages = messages))
+    private fun buildContentWithChatState(
+        chatState: StateFlow<ChatState>
+    ): String {
+        val messages =buildMessagesListWithChatState(chatState)
+        return Gson().toJson(messages).toString()
     }
-
-    // 获取每个会话的首条用户消息
-    fun getFirstUserMessages() = chatMessageDao.getFirstUserMessagesBySession()
-
-    // 根据 sessionId 获取完整对话记录
-    suspend fun resumeChatFromSession(sessionId: String): MutableStateFlow<ChatState> {
-        val messages = chatMessageDao.getMessagesBySessionId(sessionId)
-        val state = ChatState(
-            messages = messages.map {
-                if (it.role == "user") {
-                    ChatMessage.UserMessage(it.id, it.content)
-                } else {
-                    ChatMessage.AssistantMessage(it.id, it.content, isPending = false)
-                }
-            }
-        )
-        return MutableStateFlow(state)
-    }
-
-
-    // 数据模型
-    data class ChatState(
-        val messages: List<ChatMessage> = emptyList(),
-        val isLoading: Boolean = false
-    )
 
 }

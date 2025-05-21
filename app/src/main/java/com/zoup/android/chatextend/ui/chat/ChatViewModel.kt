@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.ChatRepository
-import com.zoup.android.chatextend.data.repository.ChatRepository.ChatState
+import com.zoup.android.chatextend.data.repository.bean.ChatState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,22 +20,6 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
     fun sendMessage(userInput: String) {
         viewModelScope.launch {
             _chatState = chatRepository.sendMessage(userInput, _chatState)
-        }
-    }
-
-    /**
-     * 从历史记录中恢复对话（点击某条历史消息后调用）
-     */
-    fun resumeChatFromHistory(historyMessage: ChatMessageEntity) {
-        viewModelScope.launch {
-            val restoredState = chatRepository.resumeChatFromHistory(historyMessage)
-            _chatState = restoredState
-        }
-    }
-
-    fun resumeChatFromSession(sessionId: String) {
-        viewModelScope.launch {
-            _chatState = chatRepository.resumeChatFromSession(sessionId)
         }
     }
 

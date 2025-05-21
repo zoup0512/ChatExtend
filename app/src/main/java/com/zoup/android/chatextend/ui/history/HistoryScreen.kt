@@ -1,5 +1,3 @@
-
-// HistoryScreen.kt
 package com.zoup.android.chatextend.ui.history
 
 import androidx.compose.foundation.clickable
@@ -48,7 +46,6 @@ fun HistoryScreen(
                 HistoryItem(message = message, onClick = {
                     // 点击后跳转到 ChatScreen 并恢复聊天
                     navController.navigate(R.id.nav_home)
-                    viewModel.resumeChatFromSession(message.sessionId)
                 })
             }
         }
@@ -60,8 +57,6 @@ fun HistoryItem(
     message: ChatMessageEntity,
     onClick: () -> Unit
 ) {
-    // 如果不是用户消息，则不显示
-    if (message.role != "user") return
     Card(
         modifier = Modifier
             .fillMaxWidth()
