@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.findNavController
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
-import com.zoup.android.chatextend.data.database.ChatMessageEntity
+import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

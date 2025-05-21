@@ -2,7 +2,7 @@ package com.zoup.android.chatextend.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zoup.android.chatextend.data.database.ChatMessageEntity
+import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.data.repository.ChatRepository.ChatState
 import kotlinx.coroutines.flow.MutableStateFlow

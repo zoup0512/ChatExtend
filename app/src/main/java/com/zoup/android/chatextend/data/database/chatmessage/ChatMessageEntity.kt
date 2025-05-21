@@ -1,11 +1,11 @@
-package com.zoup.android.chatextend.data.database
+package com.zoup.android.chatextend.data.database.chatmessage
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
 import java.util.UUID
 
-@Entity(tableName = "chat_messages")
+@Entity(tableName = "chat_message")
 data class ChatMessageEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val role: String, // "user" or "assistant"
@@ -17,6 +17,8 @@ data class ChatMessageEntity(
     val sessionId: String,
     // 新增字段：对应AI消息的messageId
     var messageId: String? = null,
-    //  新增字段：用于标识AI消息对应的User提出问题的消息id
-    var questionId: String? = null
+    //  新增字段：用于标识User提出问题的消息id
+    var questionId: Int = 0,
+    //  新增字段：用于标识AI回答问题的消息id
+    var answerId: Int = 0
 )

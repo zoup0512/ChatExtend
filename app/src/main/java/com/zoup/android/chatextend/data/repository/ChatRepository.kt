@@ -6,9 +6,9 @@ import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
 import com.zoup.android.chatextend.data.api.model.Message
-import com.zoup.android.chatextend.data.database.ChatMessage
-import com.zoup.android.chatextend.data.database.ChatMessageDao
-import com.zoup.android.chatextend.data.database.ChatMessageEntity
+import com.zoup.android.chatextend.data.repository.bean.ChatMessage
+import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageDao
+import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -60,18 +60,20 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             ChatMessageEntity(
                 role = "user",
                 content = userInput,
-                sessionId = sessionId
+                sessionId = sessionId,
+                questionId = 0
             )
         )
 
-//        chatMessageDao.insertMessage(
-//            ChatMessageEntity(
-//                role = "assistant",
-//                content = "",
-//                isPending = true,
-//                sessionId = sessionId
-//            )
-//        )
+        chatMessageDao.insertMessage(
+            ChatMessageEntity(
+                role = "assistant",
+                content = "",
+                isPending = true,
+                sessionId = sessionId,
+                answerId = 0
+            )
+        )
         withContext (Dispatchers.IO) {
             try {
                 // 构建 API 请求
@@ -303,8 +305,4 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         val isLoading: Boolean = false
     )
 
-    fun generateSessionId(): String {
-        val randomSuffix = UUID.randomUUID().toString()
-        return randomSuffix
-    }
 }

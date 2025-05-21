@@ -47,7 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.zoup.android.chatextend.data.database.ChatMessage
+import com.zoup.android.chatextend.data.repository.bean.ChatMessage
 import com.zoup.android.chatextend.ui.chat.components.MarkdownText
 import io.noties.markwon.Markwon
 import org.koin.androidx.compose.getViewModel

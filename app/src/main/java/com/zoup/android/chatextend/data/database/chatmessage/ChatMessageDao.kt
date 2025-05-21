@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.data.database
+package com.zoup.android.chatextend.data.database.chatmessage
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -10,14 +10,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChatMessageDao {
     // 获取全部消息（保留原有功能）
-    @Query("SELECT * FROM chat_messages ORDER BY timestamp ASC")
+    @Query("SELECT * FROM chat_message ORDER BY timestamp ASC")
     fun getAllMessages(): Flow<List<ChatMessageEntity>>
 
     // 获取每个 session 的第一条用户消息（用于 HistoryScreen）
     @Query("""
-        SELECT * FROM chat_messages 
+        SELECT * FROM chat_message 
         WHERE role = 'user' AND id IN (
-            SELECT MIN(id) FROM chat_messages 
+            SELECT MIN(id) FROM chat_message 
             WHERE role = 'user' 
             GROUP BY sessionId
         )
@@ -26,7 +26,7 @@ interface ChatMessageDao {
     fun getFirstUserMessagesBySession(): Flow<List<ChatMessageEntity>>
 
     // 根据 sessionId 获取完整对话
-    @Query("SELECT * FROM chat_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    @Query("SELECT * FROM chat_message WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getMessagesBySessionId(sessionId: String): List<ChatMessageEntity>
 
     // 插入单条消息
@@ -37,7 +37,11 @@ interface ChatMessageDao {
     @Update
     suspend fun updateMessage(message: ChatMessageEntity)
 
+    // 更新消息
+    @Update
+    suspend fun updateMessageBySessionId(message: ChatMessageEntity)
+
     // 清空数据库
-    @Query("DELETE FROM chat_messages")
+    @Query("DELETE FROM chat_message")
     suspend fun clearAllMessages()
 }
