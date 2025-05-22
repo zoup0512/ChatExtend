@@ -24,6 +24,7 @@ import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
+import com.zoup.android.chatextend.utils.MessageIdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +46,7 @@ fun HistoryScreen(
             items(history) { message ->
                 HistoryItem(message = message, onClick = {
                     // 点击后跳转到 ChatScreen 并恢复聊天
+                    MessageIdManager.currentMessageId = message.id
                     navController.navigate(R.id.nav_home)
                 })
             }

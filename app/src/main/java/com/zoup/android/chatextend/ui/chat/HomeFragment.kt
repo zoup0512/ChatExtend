@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.databinding.FragmentHomeBinding
+import com.zoup.android.chatextend.utils.MessageIdManager
 
 class HomeFragment : Fragment() {
 
@@ -69,6 +70,19 @@ class HomeFragment : Fragment() {
         }
 
         return composeView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        init()
+    }
+
+    private fun init() {
+        // 初始化逻辑，例如：
+        val messageId = MessageIdManager.currentMessageId
+        viewModel.initViews(messageId)
+
+
     }
 
     override fun onDestroyView() {
