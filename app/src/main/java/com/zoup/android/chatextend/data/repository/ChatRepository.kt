@@ -11,6 +11,7 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageDao
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage
+import com.zoup.android.chatextend.data.repository.bean.ChatMessage.AssistantMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.MessageIdManager
@@ -271,15 +272,14 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         chatState: MutableStateFlow<ChatState>
     ) {
         chatState.update { state ->
+            // only update the last assistant message
+            val lastMessage = state.messages.findLast {
+                it.id == messageId && it is AssistantMessage
+            }
             val updatedMessages = state.messages.map {
-                if (it.id == messageId && it is ChatMessage.AssistantMessage && it.content.isEmpty()) {
+                if (it == lastMessage && it is AssistantMessage) {
                     it.copy(
                         content = content,
-                        isPending = isPending
-                    )
-                } else if (it is ChatMessage.AssistantMessage) {
-                    it.copy(
-                        content = it.content,
                         isPending = isPending
                     )
                 } else {
