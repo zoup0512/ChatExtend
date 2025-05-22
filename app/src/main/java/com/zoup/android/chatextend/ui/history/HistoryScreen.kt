@@ -20,8 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.findNavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
+import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.utils.MessageIdManager
@@ -67,7 +70,17 @@ fun HistoryItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "${message.content.take(50)}...")
+            val type = object : TypeToken<List<Message>>() {}.type
+            val jsonContent = message.content
+            if (jsonContent.isNotEmpty()) {
+                val messages = Gson().fromJson<List<Message>>(jsonContent, type)
+                if (messages.isNotEmpty()) {
+                    val userMessage = messages.firstOrNull { it.role == "user" }
+                    val title = userMessage?.content
+                    Text(text = "${title?.take(50)}...")
+                }
+            }
+//            Text(text = "${message.content.take(50)}...")
         }
     }
 }
