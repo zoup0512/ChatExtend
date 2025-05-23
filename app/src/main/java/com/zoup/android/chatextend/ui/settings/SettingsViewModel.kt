@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.slideshow
+package com.zoup.android.chatextend.ui.settings
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

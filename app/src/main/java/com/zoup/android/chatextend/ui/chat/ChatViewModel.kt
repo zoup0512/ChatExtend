@@ -2,6 +2,7 @@ package com.zoup.android.chatextend.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.MessageIdManager
@@ -19,9 +20,10 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
 
     fun initViews(messageId: String?) {
         viewModelScope.launch {
-            _chatState = chatRepository.initViews(messageId,_chatState)
+            _chatState = chatRepository.initViews(messageId, _chatState)
         }
     }
+
     fun sendMessage(userInput: String) {
         viewModelScope.launch {
             _chatState = chatRepository.sendMessage(userInput, _chatState)
@@ -47,4 +49,38 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
      * 获取所有历史消息（用于在 HistoryScreen 中展示）
      */
     fun getAllHistoryMessages() = chatRepository.getAllHistoryMessages()
+
+    fun collectChatMessages(): Boolean {
+        var result = false
+        viewModelScope.launch {
+            result = chatRepository.collectChatMessages(_chatState)
+        }
+        return result
+    }
+
+    fun groupMessagesByTime(messages: List<ChatMessageEntity>): Map<String, List<ChatMessageEntity>> {
+        val grouped = mutableMapOf<String, List<ChatMessageEntity>>()
+
+        val now = System.currentTimeMillis()
+
+        // 今天（24小时）
+        val todayStart = now - (now % 86400000) // 一天的毫秒数
+        // 昨天（前24小时）
+        val yesterdayStart = todayStart - 86400000
+        // 最近7天
+        val last7DaysStart = now - 7 * 86400000
+        // 最近30天
+        val last30DaysStart = now - 30 * 86400000
+        // 最近一年
+        val lastYearStart = now - 365 * 86400000
+
+        grouped["今天"] = messages.filter { it.timestamp >= todayStart }
+        grouped["昨天"] = messages.filter { it.timestamp in yesterdayStart until todayStart }
+        grouped["最近7天"] = messages.filter { it.timestamp in last7DaysStart until yesterdayStart }
+        grouped["最近30天"] = messages.filter { it.timestamp in last30DaysStart until last7DaysStart }
+        grouped["一年内"] = messages.filter { it.timestamp in lastYearStart until last30DaysStart }
+
+        return grouped
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.slideshow
+package com.zoup.android.chatextend.ui.settings
 
 import android.os.Bundle
 import android.view.LayoutInflater

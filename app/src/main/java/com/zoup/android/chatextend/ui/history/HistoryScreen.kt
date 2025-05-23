@@ -31,12 +31,14 @@ import com.zoup.android.chatextend.utils.MessageIdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(
-    viewModel: ChatViewModel
-) {
+fun HistoryScreen(viewModel: ChatViewModel) {
     val history by viewModel.getAllHistoryMessages().collectAsState(initial = emptyList())
+    val groupedHistory by remember(history) {
+        mutableStateOf(groupHistoryMessages(history))
+    }
+
     val context = LocalContext.current
-    val activity = context as? MainActivity ?: return // 确保是 MainActivity 上下文
+    val activity = context as? MainActivity ?: return
 
     val navController = remember {
         activity.findNavController(R.id.nav_host_fragment_content_main)
@@ -46,41 +48,38 @@ fun HistoryScreen(
         TopAppBar(title = { Text("历史记录") })
     }) { padding ->
         LazyColumn(modifier = Modifier.padding(padding)) {
-            items(history) { message ->
-                HistoryItem(message = message, onClick = {
-                    // 点击后跳转到 ChatScreen 并恢复聊天
-                    MessageIdManager.currentMessageId = message.id
-                    navController.navigate(R.id.nav_home)
-                })
+            groupedHistory.forEach { (timeRange, messages) ->
+                item {
+                    Text(
+                        text = timeRange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .background(Color.LightGray),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                items(messages) { message ->
+                    HistoryItem(message = message, onClick = {
+                        MessageIdManager.currentMessageId = message.id
+                        navController.navigate(R.id.nav_home)
+                    })
+                }
             }
         }
     }
 }
 
-@Composable
-fun HistoryItem(
-    message: ChatMessageEntity,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            val type = object : TypeToken<List<Message>>() {}.type
-            val jsonContent = message.content
-            if (jsonContent.isNotEmpty()) {
-                val messages = Gson().fromJson<List<Message>>(jsonContent, type)
-                if (messages.isNotEmpty()) {
-                    val userMessage = messages.firstOrNull { it.role == "user" }
-                    val title = userMessage?.content
-                    Text(text = "${title?.take(50)}...")
-                }
-            }
-//            Text(text = "${message.content.take(50)}...")
+private fun groupHistoryMessages(messages: List<ChatMessageEntity>): Map<String, List<ChatMessageEntity>> {
+    val now = System.currentTimeMillis()
+    return messages.groupBy {
+        val diffDays = (now - it.timestamp) / (1000 * 60 * 60 * 24)
+        when {
+            diffDays <= 1 -> "1天内"
+            diffDays <= 7 -> "7天内"
+            diffDays <= 30 -> "30天内"
+            diffDays <= 365 -> "1年内"
+            else -> "更早"
         }
     }
 }

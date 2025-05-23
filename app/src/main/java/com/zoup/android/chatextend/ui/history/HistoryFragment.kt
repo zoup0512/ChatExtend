@@ -18,7 +18,6 @@ import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.databinding.FragmentHistoryBinding
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
-import com.zoup.android.chatextend.ui.chat.HomeViewModel
 
 class HistoryFragment : Fragment() {
 
@@ -46,17 +45,6 @@ class HistoryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-
-        _binding = FragmentHistoryBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
-
         val composeView = ComposeView(requireContext()).apply {
             setContent {
                 MaterialTheme {

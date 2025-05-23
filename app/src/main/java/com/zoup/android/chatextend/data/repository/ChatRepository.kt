@@ -1,9 +1,11 @@
 package com.zoup.android.chatextend.data.repository
 
 // 导入必要的模块和类
+import android.os.Environment
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.zoup.android.chatextend.ChatApplication
 import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
@@ -14,6 +16,7 @@ import com.zoup.android.chatextend.data.repository.bean.ChatMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage.AssistantMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.Constants
+import com.zoup.android.chatextend.utils.MarkdownFileUtils
 import com.zoup.android.chatextend.utils.MessageIdManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.ResponseBody
+import org.koin.android.ext.koin.androidApplication
 import retrofit2.HttpException
 import java.util.UUID
 
@@ -79,6 +83,25 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
 
         return chatState
     }
+
+    suspend fun collectChatMessages(chatState: MutableStateFlow<ChatState>): Boolean {
+        val messageId = MessageIdManager.currentMessageId
+        if (messageId.isNullOrEmpty()) {
+            return false
+        }
+        val markdownContent = chatMessageDao.getMessageContentById(messageId).toString()
+        if (markdownContent.isEmpty() || markdownContent == "null") {
+            return false
+        }
+        val success = MarkdownFileUtils.saveMarkdownToExternal(
+            context = ChatApplication.AppSingleton.application,
+            markdownText = markdownContent,
+            fileName = messageId,
+            dirType = Environment.DIRECTORY_DOWNLOADS
+        )
+        return success
+    }
+
     /**
      * 发送消息到 DeepSeek API
      */
@@ -91,7 +114,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         if (messageId.isNullOrEmpty()) {
             val newMessageId = UUID.randomUUID().toString()
             messageId = newMessageId
-            MessageIdManager.currentMessageId=  newMessageId
+            MessageIdManager.currentMessageId = newMessageId
             chatMessageDao.insertMessage(
                 ChatMessageEntity(
                     id = messageId,
@@ -292,7 +315,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         // 更新数据库中的助手消息
         chatMessageDao.updateMessage(
             ChatMessageEntity(
-                id=messageId,
+                id = messageId,
                 content = buildContentWithChatState(chatState)
             )
         )
@@ -336,7 +359,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
     private fun buildContentWithChatState(
         chatState: StateFlow<ChatState>
     ): String {
-        val messages =buildMessagesListWithChatState(chatState)
+        val messages = buildMessagesListWithChatState(chatState)
         return Gson().toJson(messages).toString()
     }
 
