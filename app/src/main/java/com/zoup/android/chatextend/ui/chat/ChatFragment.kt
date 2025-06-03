@@ -12,6 +12,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
@@ -20,6 +22,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.utils.Constants
@@ -32,7 +35,7 @@ class ChatFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
 //    private val binding get() = _binding!!
-    private val viewModel by viewModels<ChatViewModel>(
+    internal val viewModel by viewModels<ChatViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -61,7 +64,9 @@ class ChatFragment : Fragment() {
 //        homeViewModel.text.observe(viewLifecycleOwner) {
 //            textView.text = it
 //        }
-
+        if(requireActivity() is MainActivity){
+            (activity as MainActivity).setMenuVisibility(true)
+        }
         val composeView = ComposeView(requireContext()).apply {
             setContent {
                 MaterialTheme {
@@ -127,6 +132,7 @@ class ChatFragment : Fragment() {
     }
 
     // 处理权限结果
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -162,12 +168,6 @@ class ChatFragment : Fragment() {
     }
 
     private fun requestCollectChatMessages() {
-        val result = viewModel.collectChatMessages()
-        val message = if(result){
-            "保存成功"
-        }else{
-            "保存失败"
-        }
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        viewModel.collectChatMessages()
     }
 }

@@ -1,6 +1,5 @@
 package com.zoup.android.chatextend.data.repository
 
-// 导入必要的模块和类
 import android.os.Environment
 import android.util.Log
 import com.google.gson.Gson
@@ -10,8 +9,8 @@ import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
 import com.zoup.android.chatextend.data.api.model.Message
-import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageDao
-import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
+import com.zoup.android.chatextend.data.database.dao.ChatMessageDao
+import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage.AssistantMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatState
@@ -27,7 +26,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.ResponseBody
-import org.koin.android.ext.koin.androidApplication
 import retrofit2.HttpException
 import java.util.UUID
 
@@ -84,14 +82,14 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
         return chatState
     }
 
-    suspend fun collectChatMessages(chatState: MutableStateFlow<ChatState>): Boolean {
+    suspend fun collectChatMessages(collectState: MutableStateFlow<Boolean>): MutableStateFlow<Boolean> {
         val messageId = MessageIdManager.currentMessageId
         if (messageId.isNullOrEmpty()) {
-            return false
+            return MutableStateFlow(false)
         }
-        val markdownContent = chatMessageDao.getMessageContentById(messageId).toString()
+        val markdownContent = chatMessageDao.getMessageContentById(messageId).first().toString()
         if (markdownContent.isEmpty() || markdownContent == "null") {
-            return false
+            return MutableStateFlow(false)
         }
         val success = MarkdownFileUtils.saveMarkdownToExternal(
             context = ChatApplication.AppSingleton.application,
@@ -99,7 +97,10 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             fileName = messageId,
             dirType = Environment.DIRECTORY_DOWNLOADS
         )
-        return success
+        collectState.update { state->
+           success
+        }
+        return collectState
     }
 
     /**

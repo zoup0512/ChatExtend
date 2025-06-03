@@ -2,7 +2,7 @@ package com.zoup.android.chatextend.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
+import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.MessageIdManager
@@ -17,6 +17,8 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
     // 聊天消息状态
     private var _chatState = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
+    private var _collectState = MutableStateFlow(false)
+    val collectState: StateFlow<Boolean> = _collectState.asStateFlow()
 
     fun initViews(messageId: String?) {
         viewModelScope.launch {
@@ -50,12 +52,13 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
      */
     fun getAllHistoryMessages() = chatRepository.getAllHistoryMessages()
 
-    fun collectChatMessages(): Boolean {
-        var result = false
+    /**
+     * 监听收藏状态
+     */
+    fun collectChatMessages() {
         viewModelScope.launch {
-            result = chatRepository.collectChatMessages(_chatState)
+            _collectState = chatRepository.collectChatMessages(_collectState)
         }
-        return result
     }
 
     fun groupMessagesByTime(messages: List<ChatMessageEntity>): Map<String, List<ChatMessageEntity>> {

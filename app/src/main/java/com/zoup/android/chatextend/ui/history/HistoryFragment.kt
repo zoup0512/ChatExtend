@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatRepository
 import com.zoup.android.chatextend.databinding.FragmentHistoryBinding
@@ -45,6 +46,9 @@ class HistoryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        if(requireActivity() is MainActivity){
+            (activity as MainActivity).setMenuVisibility(false)
+        }
         val composeView = ComposeView(requireContext()).apply {
             setContent {
                 MaterialTheme {

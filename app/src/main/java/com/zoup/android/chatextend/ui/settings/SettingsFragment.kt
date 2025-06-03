@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.databinding.FragmentSettingsBinding
 class SettingsFragment : Fragment() {
 
@@ -21,6 +22,9 @@ class SettingsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        if(requireActivity() is MainActivity){
+            (activity as MainActivity).setMenuVisibility(false)
+        }
         val slideshowViewModel =
             ViewModelProvider(this).get(SettingsViewModel::class.java)
 

@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ChatExtend"
 include ':app'
+include ':treeview'

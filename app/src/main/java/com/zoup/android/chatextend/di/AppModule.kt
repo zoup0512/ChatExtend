@@ -23,6 +23,9 @@ val appModule = module {
     // 提供 ChatMessageDao 实例
     single { get<AppDatabase>().chatMessageDao() }
 
+     // 提供 MessageCategoryDao 实例
+    single { get<AppDatabase>().messageCategoryDao() }
+
     // 提供 ChatRepository 实例，依赖 ChatMessageDao
     single { ChatRepository(get()) }
 

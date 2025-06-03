@@ -1,5 +1,6 @@
 package com.zoup.android.chatextend.ui.chat
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,6 +61,7 @@ fun ChatScreen(
     modifier: Modifier = Modifier
 ) {
     val chatState by viewModel.chatState.collectAsState()
+    val collectState by viewModel.collectState.collectAsState()
     val lazyListState = rememberLazyListState()
     val context = LocalContext.current
     val markwon = remember { Markwon.create(context) }
@@ -72,11 +74,15 @@ fun ChatScreen(
         }
     }
 
+    LaunchedEffect(collectState) {
+        Toast.makeText(context, collectState.toString(), Toast.LENGTH_SHORT).show()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("DeepSeek Chat") }
+                title = { Text("新的聊天") }
             )
         }
     ) { paddingValues ->
@@ -189,6 +195,7 @@ fun ChatScreen(
             }
         }
     }
+
 }
 
 @Composable

@@ -1,10 +1,11 @@
-package com.zoup.android.chatextend.data.database.chatmessage
+package com.zoup.android.chatextend.data.database.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,7 +20,7 @@ interface ChatMessageDao {
     fun getAllMessages(): Flow<List<ChatMessageEntity>>
 
     // 插入单条消息
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
     // 更新消息

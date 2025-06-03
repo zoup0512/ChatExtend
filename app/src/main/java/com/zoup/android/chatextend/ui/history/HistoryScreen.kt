@@ -25,9 +25,10 @@ import com.google.gson.reflect.TypeToken
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.data.api.model.Message
-import com.zoup.android.chatextend.data.database.chatmessage.ChatMessageEntity
+import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.utils.MessageIdManager
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,16 +43,39 @@ fun HistoryScreen(
         activity.findNavController(R.id.nav_host_fragment_content_main)
     }
 
+    // 分组逻辑
+    val now = System.currentTimeMillis()
+    val groupedHistory = history.groupBy { message ->
+        val diffDays = (now - message.timestamp) / (24 * 60 * 60 * 1000)
+        when {
+            diffDays < 1 -> "1天内"
+            diffDays < 7 -> "7天内"
+            diffDays < 30 -> "30天内"
+            diffDays < 365 -> "一年内"
+            else -> "更早"
+        }
+    }
+
+    val groupOrder = listOf("1天内", "7天内", "30天内", "一年内", "更早")
+    val sortedGroups = groupedHistory.entries.sortedBy { groupOrder.indexOf(it.key) }
+
     Scaffold(topBar = {
         TopAppBar(title = { Text("历史记录") })
     }) { padding ->
         LazyColumn(modifier = Modifier.padding(padding)) {
-            items(history) { message ->
-                HistoryItem(message = message, onClick = {
-                    // 点击后跳转到 ChatScreen 并恢复聊天
-                    MessageIdManager.currentMessageId = message.id
-                    navController.navigate(R.id.nav_home)
-                })
+            for ((group, messages) in sortedGroups) {
+                item {
+                    Text(
+                        text = group,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+                items(messages) { message ->
+                    HistoryItem(message = message, onClick = {
+                        MessageIdManager.currentMessageId = message.id
+                        navController.navigate(R.id.nav_chat)
+                    })
+                }
             }
         }
     }
@@ -80,7 +104,6 @@ fun HistoryItem(
                     Text(text = "${title?.take(50)}...")
                 }
             }
-//            Text(text = "${message.content.take(50)}...")
         }
     }
 }
