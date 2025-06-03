@@ -36,11 +36,15 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         fun insertDefaultCategories(db: SupportSQLiteDatabase) {
-            db.execSQL("INSERT INTO message_category (name,parentCategoryId,categoryId) VALUES ('知识查询',-1,1)")
-            db.execSQL("INSERT INTO message_category (name,parentCategoryId,categoryId) VALUES ('学习辅助',-1,2)")
-            db.execSQL("INSERT INTO message_category (name,parentCategoryId,categoryId) VALUES ('智能编码',-1,3)")
-            db.execSQL("INSERT INTO message_category (name,parentCategoryId,categoryId) VALUES ('创意生成',-1,4)")
-            db.execSQL("INSERT INTO message_category (name,parentCategoryId,categoryId) VALUES ('其它类别',-1,5)")
+            val now = System.currentTimeMillis()
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (1,'知识查询',-1,$now)")
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (2,'学习辅助',-1,$now)")
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (3,'智能编码',-1,$now)")
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (4,'创意生成',-1,$now)")
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (5,'其它类别',-1,$now)")
+
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (6,'行业数据',1,$now)")
+            db.execSQL("INSERT INTO message_category (id,name,parentCategoryId,timestamp) VALUES (7,'安卓面试',2,$now)")
         }
     }
 }
