@@ -154,7 +154,7 @@ private class MultipleDataSourceSupportHandler<T : Any> : MultipleDataSourceSupp
 /**
  * Single data source
  */
-open class SingleDataSource<T : Any> internal constructor(
+open class SingleDataSource<T : Any>(
     override val name: String,
     override val data: T?,
     override var parent: DataSource<T>?
@@ -184,7 +184,7 @@ open class SingleDataSource<T : Any> internal constructor(
 /**
  * Data sources with child data
  */
-open class MultipleDataSource<T : Any> internal constructor(
+open class MultipleDataSource<T : Any>(
     override val name: String,
     override val data: T?,
     override var parent: DataSource<T>? = null,

@@ -74,9 +74,9 @@ fun ChatScreen(
         }
     }
 
-    LaunchedEffect(collectState) {
-        Toast.makeText(context, collectState.toString(), Toast.LENGTH_SHORT).show()
-    }
+//    LaunchedEffect(collectState) {
+//        Toast.makeText(context, collectState.toString(), Toast.LENGTH_SHORT).show()
+//    }
 
     Scaffold(
         modifier = modifier,

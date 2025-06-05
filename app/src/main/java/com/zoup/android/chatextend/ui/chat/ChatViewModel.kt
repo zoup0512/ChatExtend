@@ -3,7 +3,7 @@ package com.zoup.android.chatextend.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
-import com.zoup.android.chatextend.data.repository.ChatRepository
+import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.MessageIdManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
-class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
+class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : ViewModel() {
 
     // 聊天消息状态
     private var _chatState = MutableStateFlow(ChatState())
@@ -22,13 +22,13 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
 
     fun initViews(messageId: String?) {
         viewModelScope.launch {
-            _chatState = chatRepository.initViews(messageId, _chatState)
+            _chatState = chatMessageRepository.initViews(messageId, _chatState)
         }
     }
 
     fun sendMessage(userInput: String) {
         viewModelScope.launch {
-            _chatState = chatRepository.sendMessage(userInput, _chatState)
+            _chatState = chatMessageRepository.sendMessage(userInput, _chatState)
         }
     }
 
@@ -43,21 +43,21 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
      */
     fun clearChatHistory() {
         viewModelScope.launch {
-            chatRepository.clearChat(_chatState)
+            chatMessageRepository.clearChat(_chatState)
         }
     }
 
     /**
      * 获取所有历史消息（用于在 HistoryScreen 中展示）
      */
-    fun getAllHistoryMessages() = chatRepository.getAllHistoryMessages()
+    fun getAllHistoryMessages() = chatMessageRepository.getAllHistoryMessages()
 
     /**
      * 监听收藏状态
      */
     fun collectChatMessages() {
         viewModelScope.launch {
-            _collectState = chatRepository.collectChatMessages(_collectState)
+            _collectState = chatMessageRepository.collectChatMessages(_collectState)
         }
     }
 

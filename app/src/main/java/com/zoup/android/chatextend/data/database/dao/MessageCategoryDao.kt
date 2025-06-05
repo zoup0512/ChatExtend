@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MessageCategoryDao {
 
+    @Query("SELECT * FROM message_category ORDER BY timestamp ASC")
+    fun getAllMessageCategories(): Flow<List<MessageCategoryEntity>>
+
     @Query("SELECT * FROM message_category WHERE id = :id")
     fun getMessageCategoryById(id: Int): Flow<MessageCategoryEntity?>
 

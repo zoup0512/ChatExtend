@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,7 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.data.database.AppDatabase
-import com.zoup.android.chatextend.data.repository.ChatRepository
+import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.databinding.FragmentHistoryBinding
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 
@@ -34,7 +33,7 @@ class HistoryFragment : Fragment() {
                     // 获取数据库实例并获取 DAO
                     val dao = AppDatabase.getInstance(requireContext()).chatMessageDao()
                     // 创建 Repository 并传入 DAO
-                    val repository = ChatRepository(dao)
+                    val repository = ChatMessageRepository(dao)
                     return ChatViewModel(repository) as T
                 }
             }

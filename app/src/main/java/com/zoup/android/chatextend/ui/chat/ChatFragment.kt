@@ -12,8 +12,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
@@ -24,7 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.data.database.AppDatabase
-import com.zoup.android.chatextend.data.repository.ChatRepository
+import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.MessageIdManager
 
@@ -42,7 +40,7 @@ class ChatFragment : Fragment() {
                     // 获取数据库实例并获取 DAO
                     val dao = AppDatabase.getInstance(requireContext()).chatMessageDao()
                     // 创建 Repository 并传入 DAO
-                    val repository = ChatRepository(dao)
+                    val repository = ChatMessageRepository(dao)
                     return ChatViewModel(repository) as T
                 }
             }

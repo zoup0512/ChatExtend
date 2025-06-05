@@ -3,8 +3,10 @@ package com.zoup.android.chatextend.di
 // AppModule.kt
 import com.zoup.android.chatextend.ChatApplication
 import com.zoup.android.chatextend.data.database.AppDatabase
-import com.zoup.android.chatextend.data.repository.ChatRepository
+import com.zoup.android.chatextend.data.repository.ChatMessageRepository
+import com.zoup.android.chatextend.data.repository.MessageCategoryRepository
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
+import com.zoup.android.chatextend.ui.favourites.CategoryViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -27,8 +29,16 @@ val appModule = module {
     single { get<AppDatabase>().messageCategoryDao() }
 
     // 提供 ChatRepository 实例，依赖 ChatMessageDao
-    single { ChatRepository(get()) }
+    single { ChatMessageRepository(get()) }
+
+    single {  MessageCategoryRepository(get())}
 
     // 提供 ChatViewModel 实例，依赖 ChatRepository
     viewModel { ChatViewModel(get()) }
+
+    viewModel { CategoryViewModel(get()) }
+
+    // ViewModel
+//    factory { CategoryViewModel(get()) }
+
 }

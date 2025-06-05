@@ -4,27 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import com.zoup.android.chatextend.MainActivity
+import com.zoup.android.chatextend.data.database.entity.MessageCategoryEntity
 import com.zoup.android.chatextend.databinding.FragmentFavouritesBinding
-import com.zoup.android.chatextend.databinding.FragmentSettingsBinding
-import com.zoup.android.chatextend.ui.settings.SettingsViewModel
-import io.github.dingyi222666.view.treeview.AbstractTree
-import io.github.dingyi222666.view.treeview.Branch
-import io.github.dingyi222666.view.treeview.CreateDataScope
 import io.github.dingyi222666.view.treeview.DataSource
-import io.github.dingyi222666.view.treeview.Leaf
+import io.github.dingyi222666.view.treeview.DataSourceNodeGenerator
 import io.github.dingyi222666.view.treeview.Tree
-import io.github.dingyi222666.view.treeview.TreeNode
-import io.github.dingyi222666.view.treeview.TreeNodeGenerator
 import io.github.dingyi222666.view.treeview.TreeView
-import io.github.dingyi222666.view.treeview.buildTree
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
+import org.koin.androidx.viewmodel.ext.android.getViewModel
 
 class FavouritesFragment : Fragment() {
 
@@ -34,7 +25,6 @@ class FavouritesFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private lateinit var tree: Tree<DataSource<String>>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,119 +34,39 @@ class FavouritesFragment : Fragment() {
         if(requireActivity() is MainActivity){
             (activity as MainActivity).setMenuVisibility(false)
         }
-        val slideshowViewModel =
-            ViewModelProvider(this).get(SettingsViewModel::class.java)
+        val categoryViewModel = getViewModel<CategoryViewModel>()
 
         _binding = FragmentFavouritesBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textSlideshow
-        slideshowViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
-
-        val tree = createTree()
-        this.tree = tree
-        (binding.treeview as TreeView<DataSource<String>>).apply {
+        // 初始化 TreeView，先设置 binder 等属性，但暂不绑定 tree
+        val treeView = binding.treeview as TreeView<DataSource<String>>
+        treeView.apply {
             supportHorizontalScroll = true
             bindCoroutineScope(lifecycleScope)
-            this.tree = tree
             binder = ViewBinder()
             nodeEventListener = binder as ViewBinder
             selectionMode = TreeView.SelectionMode.NONE
         }
 
-        lifecycleScope.launch {
-            binding.treeview.refresh()
-            //  binding.treeview.expandUntil(1,true)
-            //  binding.treeview.expandAll(true)
+        categoryViewModel.messageCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
+            val tree = createTree(categories ?: emptyList())
+            treeView.tree = tree
+            lifecycleScope.launch {
+                treeView.refresh()
+            }
         }
         return root
     }
 
-    private fun createTree(): Tree<DataSource<String>> {
-        val dataCreator: CreateDataScope<String> = { _, _ -> UUID.randomUUID().toString() }
-        val tree = buildTree(dataCreator) {
-            Branch("app") {
-                Branch("src") {
-                    Branch("main") {
-                        Branch("kotlin") {
-                            Branch("com.dingyi.treeview") {
-                                Leaf("MainActivity.kt")
-                            }
-                        }
-                        Branch("java") {
-                            Branch("com.dingyi.treeview") {
-                                Leaf("MainActivity.java")
-                            }
-                        }
-                        Branch("res") {
-                            Branch("drawable") {
+    private fun createTree(categories: List<MessageCategoryEntity>): Tree<DataSource<String>> {
+        val tree = Tree<DataSource<String>>()
+        val treeNodes = buildCategoryTree(categories)
+        val rootDataSource = convertToDataSource(treeNodes)
+        val generator = DataSourceNodeGenerator(rootDataSource)
 
-                            }
-                            Branch("xml") {}
-                        }
-                        Leaf("AndroidManifest.xml")
-                    }
-                    Branch("test") {
-                        Branch("java") {
-                            Branch("com.dingyi.treeview") {
-                                Leaf("ExampleUnitTest.kt")
-                            }
-                        }
-                    }
-
-                }
-                Leaf("build.gradle")
-                Leaf("gradle.properties")
-            }
-            Branch("build") {
-                Branch("generated") {
-                    Branch("source") {
-                        Branch("buildConfig") {
-                            Branch("debug") {
-                                Leaf("com.dingyi.treeview.BuildConfig.java")
-                            }
-                        }
-                    }
-                }
-                Branch("outputs") {
-                    Branch("apk") {
-                        Branch("debug") {
-                            Leaf("app-debug.apk")
-                        }
-                    }
-                }
-            }
-        }
-
-        val oldGenerator = tree.generator
-
-        tree.generator = object : TreeNodeGenerator<DataSource<String>> {
-            override suspend fun fetchChildData(targetNode: TreeNode<DataSource<String>>): Set<DataSource<String>> {
-                if (isSlow) {
-                    delay(2000L)
-                }
-                return oldGenerator.fetchChildData(targetNode)
-            }
-
-            override fun createNode(
-                parentNode: TreeNode<DataSource<String>>,
-                currentData: DataSource<String>,
-                tree: AbstractTree<DataSource<String>>
-            ): TreeNode<DataSource<String>> {
-                return oldGenerator.createNode(parentNode, currentData, tree)
-            }
-
-            override suspend fun moveNode(
-                srcNode: TreeNode<DataSource<String>>,
-                targetNode: TreeNode<DataSource<String>>,
-                tree: AbstractTree<DataSource<String>>
-            ): Boolean {
-                return oldGenerator.moveNode(srcNode, targetNode, tree)
-            }
-        }
-
+        tree.generator = generator
+        tree.initTree()
         return tree
     }
 

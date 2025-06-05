@@ -26,7 +26,7 @@ import androidx.core.util.putAll
 /**
  * Default tree structure implementation
  */
-class Tree<T : Any> internal constructor() : AbstractTree<T> {
+class Tree<T : Any>() : AbstractTree<T> {
 
     private val allNode = SparseArray<TreeNode<T>>()
 

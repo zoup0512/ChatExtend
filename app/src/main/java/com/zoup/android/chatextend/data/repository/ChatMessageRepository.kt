@@ -33,7 +33,7 @@ import java.util.UUID
  * ChatRepository 类用于处理与聊天相关的业务逻辑，包括消息的发送、接收、重试机制等。
  * 它通过依赖注入的方式获取网络服务（DeepSeekApiService）、数据库访问对象（ChatMessageDao）以及 API 密钥。
  */
-class ChatRepository(private val chatMessageDao: ChatMessageDao) {
+class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
 
     /**
      * 初始化聊天视图
