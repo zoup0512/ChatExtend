@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +21,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.navigation.Navigation.findNavController
 import com.zoup.android.chatextend.MainActivity
+import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.utils.Constants
@@ -33,6 +37,7 @@ class ChatFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
 //    private val binding get() = _binding!!
+    private lateinit var root: View
     internal val viewModel by viewModels<ChatViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
@@ -52,18 +57,9 @@ class ChatFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-//        val homeViewModel =
-//            ViewModelProvider(this).get(HomeViewModel::class.java)
-//
-//        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-//        val root: View = binding.root
-//
-//        val textView: TextView = binding.textHome
-//        homeViewModel.text.observe(viewLifecycleOwner) {
-//            textView.text = it
-//        }
         if(requireActivity() is MainActivity){
-            (activity as MainActivity).setMenuVisibility(true)
+            (activity as MainActivity).setFavouriteMenuVisibility(true)
+            (activity as MainActivity).setSureMenuVisibility(false)
         }
         val composeView = ComposeView(requireContext()).apply {
             setContent {
@@ -77,29 +73,51 @@ class ChatFragment : Fragment() {
                 }
             }
         }
-
+        root = composeView
         return composeView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         init()
+        viewModel.chatStateFlow.asLiveData().observe(viewLifecycleOwner) { collectState ->
+            if (requireActivity() is MainActivity) {
+                Log.d("ChatFragment", "准备调用 setFavouriteMenuChecked")
+                (activity as MainActivity).setFavouriteMenuChecked(collectState.isCollected)
+            }
+        }
+    }
+
+    // FragmentA.kt
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // 设置结果监听器（在 Fragment 创建时注册）
+        parentFragmentManager.setFragmentResultListener(
+            Constants.CATEGORY_FRAGMENT_REQUEST_KEY,  // 唯一标识符，需与 Fragment B 匹配
+            this
+        ) { requestKey, resultBundle ->
+            val categoryId = resultBundle.getInt(Constants.CATEGORY_ID_KEY)
+            if (categoryId != -0 && categoryId != -1) {
+                viewModel.collectChatMessages(categoryId)
+            }
+        }
     }
 
     private fun init() {
         // 初始化逻辑，例如：
         val messageId = MessageIdManager.currentMessageId
         viewModel.initViews(messageId)
-
-
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
     }
 
-    public fun clickFavorites() {
-        checkStoragePermission()
+    public fun clickFavouriteMenuItem() {
+        val args = Bundle()
+//        args.putInt("categoryId", selectedCategoryId)
+        findNavController(root).navigate(R.id.nav_favourites, args)
     }
 
     // 检查权限
@@ -109,7 +127,7 @@ class ChatFragment : Fragment() {
                 requireContext(),
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             ) == PERMISSION_GRANTED -> {
-                requestCollectChatMessages()
+//                collectChatMessages()
             }
 
             ActivityCompat.shouldShowRequestPermissionRationale(
@@ -140,7 +158,7 @@ class ChatFragment : Fragment() {
         when (requestCode) {
             Constants.REQUEST_STORAGE_PERMISSION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    requestCollectChatMessages()
+//                    collectChatMessages()
                 } else {
                     Toast.makeText(requireContext(), "需要存储权限才能保存文件", Toast.LENGTH_SHORT).show()
                 }
@@ -165,7 +183,4 @@ class ChatFragment : Fragment() {
             .show()
     }
 
-    private fun requestCollectChatMessages() {
-        viewModel.collectChatMessages()
-    }
 }

@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChatMessageDao {
 
-    @Query("SELECT content FROM chat_message WHERE id = :id")
-    fun getMessageContentById(id: String): Flow<String?>
+    @Query("SELECT * FROM chat_message WHERE id = :id LIMIT 1")
+    suspend fun getMessageByIdSync(id: String): ChatMessageEntity?
 
+    @Query("SELECT content FROM chat_message WHERE id = :id LIMIT 1")
+    suspend fun getMessageContentByIdSync(id: String): String?
 
-    // 获取全部消息（保留原有功能）
+    // 获取全部消息
     @Query("SELECT * FROM chat_message ORDER BY timestamp ASC")
     fun getAllMessages(): Flow<List<ChatMessageEntity>>
 
@@ -26,6 +28,7 @@ interface ChatMessageDao {
     // 更新消息
     @Update
     suspend fun updateMessage(message: ChatMessageEntity)
+
 
     // 清空数据库
     @Query("DELETE FROM chat_message")

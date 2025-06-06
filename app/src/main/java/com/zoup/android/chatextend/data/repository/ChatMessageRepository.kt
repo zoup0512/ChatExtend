@@ -1,10 +1,8 @@
 package com.zoup.android.chatextend.data.repository
 
-import android.os.Environment
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.zoup.android.chatextend.ChatApplication
 import com.zoup.android.chatextend.data.api.DeepSeekApiService
 import com.zoup.android.chatextend.data.api.model.DeepSeekRequest
 import com.zoup.android.chatextend.data.api.model.DeepSeekStreamResponse
@@ -15,13 +13,11 @@ import com.zoup.android.chatextend.data.repository.bean.ChatMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatMessage.AssistantMessage
 import com.zoup.android.chatextend.data.repository.bean.ChatState
 import com.zoup.android.chatextend.utils.Constants
-import com.zoup.android.chatextend.utils.MarkdownFileUtils
 import com.zoup.android.chatextend.utils.MessageIdManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -48,11 +44,9 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
         } else {
             messageId
         }
-        val flowContent = chatMessageDao.getMessageContentById(currentMessageId)
-        val content = flowContent.first().toString()
-        Log.d("ChatRepository-content", content)
-        //TODO 为什么要这样判空??(content!="null")
-        if (content != "null" && content.isNotEmpty()) {
+        val chatMessageEntity = chatMessageDao.getMessageByIdSync(currentMessageId)
+        val content = chatMessageEntity?.content
+        if (!content.isNullOrEmpty()) {
             val type = object : TypeToken<List<Message>>() {}.type
             val messages: List<Message> = Gson().fromJson(content, type)
             chatState.update { state ->
@@ -73,7 +67,8 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
                             else -> throw IllegalArgumentException("Unknown message role: ${message.role}")
                         }
                     },
-                    isLoading = false
+                    isLoading = false,
+                    isCollected = chatMessageEntity.isCollected == true,
                 )
 
             }
@@ -82,25 +77,68 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
         return chatState
     }
 
-    suspend fun collectChatMessages(collectState: MutableStateFlow<Boolean>): MutableStateFlow<Boolean> {
+//    suspend fun collectChatMessages(collectState: MutableStateFlow<Boolean>): MutableStateFlow<Boolean> {
+//        val messageId = MessageIdManager.currentMessageId
+//        if (messageId.isNullOrEmpty()) {
+//            return MutableStateFlow(false)
+//        }
+//        val markdownContent = chatMessageDao.getMessageContentById(messageId).first().toString()
+//        if (markdownContent.isEmpty() || markdownContent == "null") {
+//            return MutableStateFlow(false)
+//        }
+//        val success = MarkdownFileUtils.saveMarkdownToExternal(
+//            context = ChatApplication.AppSingleton.application,
+//            markdownText = markdownContent,
+//            fileName = messageId,
+//            dirType = Environment.DIRECTORY_DOWNLOADS
+//        )
+//        collectState.update { state->
+//           success
+//        }
+//        return collectState
+//    }
+
+    suspend fun collectChatMessages(
+        categoryId: Int,
+        collectStateFlow: MutableStateFlow<ChatState>
+    ): MutableStateFlow<ChatState> {
         val messageId = MessageIdManager.currentMessageId
         if (messageId.isNullOrEmpty()) {
-            return MutableStateFlow(false)
+            return collectStateFlow
         }
-        val markdownContent = chatMessageDao.getMessageContentById(messageId).first().toString()
-        if (markdownContent.isEmpty() || markdownContent == "null") {
-            return MutableStateFlow(false)
+        val chatMessageEntity = chatMessageDao.getMessageByIdSync(messageId)
+        if (chatMessageEntity == null) {
+            return collectStateFlow
         }
-        val success = MarkdownFileUtils.saveMarkdownToExternal(
-            context = ChatApplication.AppSingleton.application,
-            markdownText = markdownContent,
-            fileName = messageId,
-            dirType = Environment.DIRECTORY_DOWNLOADS
-        )
-        collectState.update { state->
-           success
+
+        if (chatMessageEntity.isCollected) {
+            //  取消收藏
+            chatMessageDao.updateMessage(
+                chatMessageEntity.copy(
+                    isCollected = false,
+                    categoryId = -1
+                )
+            )
+        } else {
+            //  收藏
+            chatMessageDao.updateMessage(
+                chatMessageEntity.copy(
+                    isCollected = true,
+                    categoryId = categoryId
+                )
+            )
         }
-        return collectState
+        val newChatMessageEntity = chatMessageDao.getMessageByIdSync(messageId)
+        collectStateFlow.update { state ->
+            if (newChatMessageEntity != null) {
+                state.copy(
+                    isCollected = newChatMessageEntity.isCollected
+                )
+            } else {
+                state
+            }
+        }
+        return collectStateFlow
     }
 
     /**

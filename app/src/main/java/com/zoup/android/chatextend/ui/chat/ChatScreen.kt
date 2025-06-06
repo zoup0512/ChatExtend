@@ -60,8 +60,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = getViewModel(),
     modifier: Modifier = Modifier
 ) {
-    val chatState by viewModel.chatState.collectAsState()
-    val collectState by viewModel.collectState.collectAsState()
+    val chatState by viewModel.chatStateFlow.collectAsState()
     val lazyListState = rememberLazyListState()
     val context = LocalContext.current
     val markwon = remember { Markwon.create(context) }
@@ -74,9 +73,10 @@ fun ChatScreen(
         }
     }
 
-//    LaunchedEffect(collectState) {
-//        Toast.makeText(context, collectState.toString(), Toast.LENGTH_SHORT).show()
-//    }
+    // 自动滚动到最后一条消息
+    LaunchedEffect(chatState) {
+//        Toast.makeText(context, chatState.isCollected.toString(), Toast.LENGTH_SHORT).show()
+    }
 
     Scaffold(
         modifier = modifier,

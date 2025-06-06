@@ -15,26 +15,26 @@ import kotlinx.coroutines.launch
 class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : ViewModel() {
 
     // 聊天消息状态
-    private var _chatState = MutableStateFlow(ChatState())
-    val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
-    private var _collectState = MutableStateFlow(false)
-    val collectState: StateFlow<Boolean> = _collectState.asStateFlow()
+    private var _chatStateFlow = MutableStateFlow(ChatState())
+    val chatStateFlow: StateFlow<ChatState> = _chatStateFlow.asStateFlow()
 
     fun initViews(messageId: String?) {
         viewModelScope.launch {
-            _chatState = chatMessageRepository.initViews(messageId, _chatState)
+            chatMessageRepository.initViews(messageId, _chatStateFlow).collect {
+                _chatStateFlow.value = it
+            }
         }
     }
 
     fun sendMessage(userInput: String) {
         viewModelScope.launch {
-            _chatState = chatMessageRepository.sendMessage(userInput, _chatState)
+            _chatStateFlow = chatMessageRepository.sendMessage(userInput, _chatStateFlow)
         }
     }
 
     fun startNewConversation() {
         MessageIdManager.currentMessageId = null
-        _chatState.value = ChatState() // 重置为初始状态
+        _chatStateFlow.value = ChatState() // 重置为初始状态
     }
 
 
@@ -43,7 +43,7 @@ class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : 
      */
     fun clearChatHistory() {
         viewModelScope.launch {
-            chatMessageRepository.clearChat(_chatState)
+            chatMessageRepository.clearChat(_chatStateFlow)
         }
     }
 
@@ -55,9 +55,11 @@ class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : 
     /**
      * 监听收藏状态
      */
-    fun collectChatMessages() {
+    fun collectChatMessages(categoryId: Int) {
         viewModelScope.launch {
-            _collectState = chatMessageRepository.collectChatMessages(_collectState)
+            chatMessageRepository.collectChatMessages(categoryId, _chatStateFlow).collect {
+                _chatStateFlow.value = it
+            }
         }
     }
 

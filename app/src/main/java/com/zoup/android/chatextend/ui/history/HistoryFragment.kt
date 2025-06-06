@@ -19,6 +19,7 @@ import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.databinding.FragmentHistoryBinding
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 
+
 class HistoryFragment : Fragment() {
 
     private var _binding: FragmentHistoryBinding? = null
@@ -46,7 +47,8 @@ class HistoryFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         if(requireActivity() is MainActivity){
-            (activity as MainActivity).setMenuVisibility(false)
+            (activity as MainActivity).setFavouriteMenuVisibility(false)
+            (activity as MainActivity).setSureMenuVisibility(false)
         }
         val composeView = ComposeView(requireContext()).apply {
             setContent {

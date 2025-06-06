@@ -23,7 +23,8 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         if(requireActivity() is MainActivity){
-            (activity as MainActivity).setMenuVisibility(false)
+            (activity as MainActivity).setFavouriteMenuVisibility(false)
+            (activity as MainActivity).setSureMenuVisibility(false)
         }
         val slideshowViewModel =
             ViewModelProvider(this).get(SettingsViewModel::class.java)

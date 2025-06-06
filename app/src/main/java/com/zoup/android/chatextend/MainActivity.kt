@@ -1,6 +1,7 @@
 package com.zoup.android.chatextend
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,7 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.zoup.android.chatextend.databinding.ActivityMainBinding
 import com.zoup.android.chatextend.ui.chat.ChatFragment
+import com.zoup.android.chatextend.ui.favourites.FavouritesFragment
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,8 +25,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: androidx.navigation.NavController
 
-    private var shouldShowMenu = false
-    private var isFavorite = false
+    private var mainMenu: Menu? = null
+    private var shouldShowFavouriteMenu = false
+    private var shouldShowSureMenu = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 //        }
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_chat, R.id.nav_history, R.id.nav_settings
+                R.id.nav_chat, R.id.nav_history, R.id.nav_favourites, R.id.nav_settings
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -69,9 +72,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        if (shouldShowMenu) {
+        if (shouldShowFavouriteMenu || shouldShowSureMenu) {
             menuInflater.inflate(R.menu.main, menu)
+            this.mainMenu = menu
+            if (shouldShowFavouriteMenu) {
+                menu.findItem(R.id.action_favorites).isVisible = true
+            } else if (shouldShowSureMenu) {
+                menu.findItem(R.id.action_sure).isVisible = true
+            }
+
             return true
         }
         return false
@@ -80,11 +89,14 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_favorites -> {
-                onMenuFavoritesSelected()
-//                item.setIcon(if (isFavorite) R.drawable.ic_favorite_24dp else R.drawable.ic_favorite_border_24dp)
+                clickMenuItem()
                 true
             }
 
+            R.id.action_sure -> {
+                clickMenuItem()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
 //        if (item.getItemId() === R.id.action_favorites) {
@@ -100,7 +112,7 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    fun onMenuFavoritesSelected() {
+    fun clickMenuItem() {
 //        val currentDestination = navController.currentDestination
 //        if (currentDestination != null) {
 //            // 获取当前Fragment的ID
@@ -115,18 +127,35 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
         if (currentFragment is ChatFragment) {
-            currentFragment.clickFavorites()
+            currentFragment.clickFavouriteMenuItem()
+        } else if (currentFragment is FavouritesFragment) {
+            currentFragment.clickSureMenuItem()
         }
     }
 
     // 提供给 Fragment 调用来控制菜单显示/隐藏
-    fun setMenuVisibility(visible: Boolean) {
-        shouldShowMenu = visible
+    fun setFavouriteMenuVisibility(visible: Boolean) {
+        shouldShowFavouriteMenu = visible
         invalidateOptionsMenu() // 强制刷新菜单
     }
 
-    fun setFavorite(isFavorite: Boolean) {
-        this.isFavorite = isFavorite
+    // 提供给 Fragment 调用来控制菜单显示/隐藏
+    fun setSureMenuVisibility(visible: Boolean) {
+        shouldShowSureMenu = visible
+        invalidateOptionsMenu() // 强制刷新菜单
+    }
+
+    fun setFavouriteMenuChecked(checked: Boolean) {
+        val favouriteMenu: MenuItem? = mainMenu?.findItem(R.id.action_favorites)
+        if (favouriteMenu != null) {
+            if (checked) {
+                favouriteMenu.setIcon(R.drawable.ic_favorite_checked_24dp)
+            } else {
+                favouriteMenu.setIcon(R.drawable.ic_favorite_unchecked_24dp)
+            }
+        } else {
+            Log.w("MainActivity", "mainMenu 或 menuItem 为 null")
+        }
     }
 
 }

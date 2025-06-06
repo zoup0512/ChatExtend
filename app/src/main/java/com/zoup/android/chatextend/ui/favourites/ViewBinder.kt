@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Space
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +20,8 @@ import io.github.dingyi222666.view.treeview.TreeViewBinder
 
 class ViewBinder : TreeViewBinder<DataSource<String>>(),
     TreeNodeEventListener<DataSource<String>> {
+    // 定义回调接口
+    public var onNodeLongClickListener: ((TreeNode<DataSource<String>>) -> Unit)? = null
 
     override fun createView(parent: ViewGroup, viewType: Int): View {
         val layoutInflater = LayoutInflater.from(parent.context)
@@ -130,6 +131,11 @@ class ViewBinder : TreeViewBinder<DataSource<String>>(),
 
     override fun onRefresh(status: Boolean) {
 //        binding.progress.isVisible = status
+    }
+
+    override fun onLongClick(node: TreeNode<DataSource<String>>, holder: TreeView.ViewHolder): Boolean {
+        onNodeLongClickListener?.invoke(node)
+        return true
     }
 }
 
