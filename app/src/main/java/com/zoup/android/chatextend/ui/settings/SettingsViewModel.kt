@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 
 class SettingsViewModel : ViewModel() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is slideshow Fragment"
+    val _text = MutableLiveData<String>().apply {
+        value = "无"
     }
     val text: LiveData<String> = _text
 }

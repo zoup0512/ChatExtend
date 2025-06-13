@@ -16,12 +16,17 @@
         android:name="com.zoup.android.chatextend.ui.history.HistoryFragment"
         android:label="@string/menu_history"
         tools:layout="@layout/fragment_history" />
+    <fragment
+        android:id="@+id/nav_notes"
+        android:name="com.zoup.android.chatextend.ui.notes.NotesFragment"
+        android:label="@string/menu_notes"
+        tools:layout="@layout/fragment_notes" />
 
     <fragment
-        android:id="@+id/nav_favourites"
-        android:name="com.zoup.android.chatextend.ui.favourites.FavouritesFragment"
-        android:label="@string/menu_favourites"
-        tools:layout="@layout/fragment_favourites" />
+        android:id="@+id/nav_category"
+        android:name="com.zoup.android.chatextend.ui.category.CategoryManagementFragment"
+        android:label="@string/menu_category"
+        tools:layout="@layout/fragment_category" />
 
     <fragment
         android:id="@+id/nav_settings"

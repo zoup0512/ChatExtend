@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.favourites
+package com.zoup.android.chatextend.ui.category
 
 import com.zoup.android.chatextend.data.database.entity.MessageCategoryEntity
 import io.github.dingyi222666.view.treeview.MultipleDataSource

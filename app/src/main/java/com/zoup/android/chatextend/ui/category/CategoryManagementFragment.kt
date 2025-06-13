@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.favourites
+package com.zoup.android.chatextend.ui.category
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,7 +14,7 @@ import androidx.navigation.Navigation.findNavController
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.data.database.entity.MessageCategoryEntity
-import com.zoup.android.chatextend.databinding.FragmentFavouritesBinding
+import com.zoup.android.chatextend.databinding.FragmentCategoryBinding
 import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.Constants.Companion.CATEGORY_FRAGMENT_REQUEST_KEY
 import io.github.dingyi222666.view.treeview.DataSource
@@ -24,9 +24,9 @@ import io.github.dingyi222666.view.treeview.TreeView
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 
-class FavouritesFragment : Fragment() {
+class CategoryManagementFragment : Fragment() {
 
-    private var _binding: FragmentFavouritesBinding? = null
+    private var _binding: FragmentCategoryBinding? = null
     private var isSlow = false
 
     // This property is only valid between onCreateView and
@@ -49,7 +49,7 @@ class FavouritesFragment : Fragment() {
         }
         categoryViewModel = getViewModel<CategoryViewModel>()
 
-        _binding = FragmentFavouritesBinding.inflate(inflater, container, false)
+        _binding = FragmentCategoryBinding.inflate(inflater, container, false)
         root = binding.root
 
         // 初始化 TreeView，先设置 binder 等属性，但暂不绑定 tree

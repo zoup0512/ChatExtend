@@ -119,7 +119,7 @@ class ChatFragment : Fragment() {
             viewModel.collectChatMessages(viewModel.chatStateFlow.value.categoryId)
         } else {
             val args = Bundle()
-            findNavController(root).navigate(R.id.nav_favourites, args)
+            findNavController(root).navigate(R.id.nav_category, args)
         }
     }
 

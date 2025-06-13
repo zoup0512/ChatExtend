@@ -6,13 +6,13 @@
 
     <!-- 外圆 -->
     <path
-        android:fillColor="#FF000000"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z" />
 
     <!-- 垃圾桶（黑色） -->
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M15.5,4l-1,-1h-5l-1,1H5v2h14V4z" />
+<!--    <path-->
+<!--        android:fillColor="#FF000000"-->
+<!--        android:pathData="M15.5,4l-1,-1h-5l-1,1H5v2h14V4z" />-->
 
     <!-- 减号（红色） -->
     <path

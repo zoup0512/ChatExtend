@@ -2,8 +2,8 @@
     <string name="app_name">ChatExtend</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">关于</string>
-    <string name="nav_header_subtitle">https://github.com/zoup0512/ChatExtend</string>
+    <string name="nav_header_title">关于我</string>
+    <string name="nav_header_subtitle"> </string>
     <string name="nav_header_desc">Navigation header</string>
 
     <string name="action_settings">设置</string>
@@ -11,10 +11,11 @@
     <string name="action_sure">确定</string>
     <string name="action_add">增加</string>
 
-    <string name="menu_chat">对话</string>
+    <string name="menu_chat">新对话</string>
     <string name="menu_history">历史记录</string>
+    <string name="menu_notes">AI笔记</string>
+    <string name="menu_category">类别管理</string>
     <string name="menu_settings">设置</string>
-    <string name="menu_favourites">收藏管理</string>
 
     <string name="tips_no_category_selected">请长按类别选中</string>
 </resources>

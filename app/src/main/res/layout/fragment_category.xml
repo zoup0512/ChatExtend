@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.favourites.FavouritesFragment">
+    tools:context=".ui.category.CategoryManagementFragment">
 
     <io.github.dingyi222666.view.treeview.TreeView
         android:id="@+id/treeview"

@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.favourites
+package com.zoup.android.chatextend.ui.category
 
 import android.content.res.Resources
 import android.view.LayoutInflater

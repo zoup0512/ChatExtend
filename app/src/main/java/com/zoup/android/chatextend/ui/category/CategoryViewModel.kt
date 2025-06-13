@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.favourites
+package com.zoup.android.chatextend.ui.category
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

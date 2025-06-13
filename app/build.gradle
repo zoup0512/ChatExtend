@@ -29,14 +29,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // 从 local.properties 读取 API 密钥
-            buildConfigField "String", "DEEPSEEK_API_KEY", '"sk-fbcbc2bfaec74a71b948a5e6ad6cfc4a"'
         }
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // 从 local.properties 读取 API 密钥
-            buildConfigField "String", "DEEPSEEK_API_KEY", '"sk-fbcbc2bfaec74a71b948a5e6ad6cfc4a"'
         }
     }
     compileOptions {

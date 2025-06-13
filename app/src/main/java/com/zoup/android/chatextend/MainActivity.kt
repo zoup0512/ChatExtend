@@ -15,8 +15,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import com.zoup.android.chatextend.databinding.ActivityMainBinding
+import com.zoup.android.chatextend.ui.category.CategoryManagementFragment
 import com.zoup.android.chatextend.ui.chat.ChatFragment
-import com.zoup.android.chatextend.ui.favourites.FavouritesFragment
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,7 +47,11 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_chat, R.id.nav_history, R.id.nav_favourites, R.id.nav_settings
+                R.id.nav_chat,
+                R.id.nav_history,
+                R.id.nav_notes,
+                R.id.nav_category,
+                R.id.nav_settings
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -94,11 +98,7 @@ class MainActivity : AppCompatActivity() {
 
             else -> super.onOptionsItemSelected(item)
         }
-//        if (item.getItemId() === R.id.action_favorites) {
-//            isFavorite = !isFavorite
-//            item.setIcon(if (isFavorite) R.drawable.ic_favorite_24dp else R.drawable.ic_favorite_border_24dp)
-//            return true
-//        }
+
         return super.onOptionsItemSelected(item)
     }
 
@@ -108,22 +108,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun clickMenuItem(id: Int) {
-//        val currentDestination = navController.currentDestination
-//        if (currentDestination != null) {
-//            // 获取当前Fragment的ID
-//            val fragmentId = currentDestination.id
-//            // 你可以根据fragmentId进一步获取Fragment实例，例如：
-//            val currentFragment: Fragment? = supportFragmentManager.findFragmentById(fragmentId)?.childFragmentManager?.fragments?.firstOrNull()
-//            if (currentFragment is ChatFragment) {
-//                currentFragment.clickFavorites()
-//            }
-//        }
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
         if (currentFragment is ChatFragment) {
             currentFragment.clickFavouriteMenuItem()
-        } else if (currentFragment is FavouritesFragment) {
+        } else if (currentFragment is CategoryManagementFragment) {
             if (id == R.id.action_add) {
                 currentFragment.clickAddMenuItem()
             } else if (id == R.id.action_delete) {
