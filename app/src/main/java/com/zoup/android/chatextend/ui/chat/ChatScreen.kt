@@ -73,18 +73,13 @@ fun ChatScreen(
         }
     }
 
-    // 自动滚动到最后一条消息
-    LaunchedEffect(chatState) {
-//        Toast.makeText(context, chatState.isCollected.toString(), Toast.LENGTH_SHORT).show()
-    }
-
     Scaffold(
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("新对话") }
-            )
-        }
+//        topBar = {
+//            TopAppBar(
+//                title = { Text("新对话") }
+//            )
+//        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -126,8 +121,8 @@ fun ChatScreen(
                 // 新增：开始新会话按钮
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(18.dp))
                         .background(MaterialTheme.colorScheme.secondary)
                         .clickable(
                             onClick = {
@@ -140,18 +135,18 @@ fun ChatScreen(
                         imageVector = Icons.Default.Refresh, // 使用 Refresh 图标表示新会话
                         contentDescription = "New Conversation",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 OutlinedTextField(
                     value = userInput,
                     onValueChange = { userInput = it },
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(24.dp)),
-                    placeholder = { Text("Type your message...") },
+                        .clip(RoundedCornerShape(0.dp)),
+                    placeholder = { Text("给DeepSeek发送消息") },
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Send
                     ),
@@ -167,12 +162,12 @@ fun ChatScreen(
                     maxLines = 3
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(18.dp))
                         .background(MaterialTheme.colorScheme.primary)
                         .clickable(
                             enabled = userInput.isNotBlank(),
@@ -189,7 +184,7 @@ fun ChatScreen(
                         imageVector = Icons.Default.Send,
                         contentDescription = "Send",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -251,7 +246,7 @@ private fun AssistantMessageItem(
                             modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp
                         )
-                        Text("Thinking...")
+                        Text("思考中...")
                     }
                 } else {
                     // 流式内容或完整内容

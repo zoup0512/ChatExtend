@@ -27,7 +27,6 @@ import org.koin.androidx.viewmodel.ext.android.getViewModel
 class CategoryManagementFragment : Fragment() {
 
     private var _binding: FragmentCategoryBinding? = null
-    private var isSlow = false
 
     // This property is only valid between onCreateView and
     // onDestroyView.

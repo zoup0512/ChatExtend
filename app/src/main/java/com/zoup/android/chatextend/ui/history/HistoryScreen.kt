@@ -11,14 +11,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.findNavController
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -28,7 +29,6 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.utils.MessageIdManager
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,14 +60,16 @@ fun HistoryScreen(
     val sortedGroups = groupedHistory.entries.sortedBy { groupOrder.indexOf(it.key) }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("历史记录") })
+//        TopAppBar(title = { Text("历史记录") })
     }) { padding ->
         LazyColumn(modifier = Modifier.padding(padding)) {
             for ((group, messages) in sortedGroups) {
                 item {
                     Text(
                         text = group,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = androidx.compose.ui.graphics.Color.Gray,
+                        fontSize = 12.sp
                     )
                 }
                 items(messages) { message ->
@@ -89,11 +91,15 @@ fun HistoryItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+//            .padding(top = 2.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RectangleShape,
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
             val type = object : TypeToken<List<Message>>() {}.type
             val jsonContent = message.content
             if (jsonContent.isNotEmpty()) {
@@ -101,7 +107,7 @@ fun HistoryItem(
                 if (messages.isNotEmpty()) {
                     val userMessage = messages.firstOrNull { it.role == "user" }
                     val title = userMessage?.content
-                    Text(text = "${title?.take(50)}...")
+                    Text(text = "${title?.take(30)}", modifier = Modifier.padding(start = 10.dp))
                 }
             }
         }

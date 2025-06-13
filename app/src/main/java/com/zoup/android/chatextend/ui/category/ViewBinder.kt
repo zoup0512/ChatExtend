@@ -94,6 +94,7 @@ class ViewBinder : TreeViewBinder<DataSource<String>>(),
         } else {
             ItemFileBinding.bind(holder.itemView).checkbox
         }
+//        return ItemDirBinding.bind(holder.itemView).checkbox
     }
 
     override fun onClick(node: TreeNode<DataSource<String>>, holder: TreeView.ViewHolder) {
