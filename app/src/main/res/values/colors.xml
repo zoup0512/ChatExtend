@@ -7,4 +7,23 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+<!--    &lt;!&ndash; 主色调 (近似 DeepSeek 的蓝绿色) &ndash;&gt;-->
+<!--    <color name="deepseek_primary">#00B4A0</color>-->
+<!--    <color name="deepseek_primary_dark">#00897B</color>-->
+
+<!--    &lt;!&ndash; 次要色调 (可以选择互补色) &ndash;&gt;-->
+<!--    <color name="deepseek_secondary">#FF6D00</color>-->
+<!--    <color name="deepseek_secondary_dark">#E65100</color>-->
+
+    <!-- 推荐在colors.xml中定义的具体色值 -->
+    <color name="deepseek_primary">#66B3FF</color>
+    <color name="deepseek_primary_dark">#3385CC</color>
+    <color name="deepseek_secondary">#E6F2FF</color>
+    <color name="deepseek_secondary_dark">#B3D9FF</color>
+
+    <!-- 中性色 -->
+    <color name="gray_50">#FAFAFA</color>
+    <color name="gray_900">#212121</color>
+    <color name="red_500">#F44336</color>
 </resources>

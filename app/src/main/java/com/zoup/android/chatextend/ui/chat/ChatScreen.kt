@@ -82,7 +82,7 @@ fun ChatScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("新的聊天") }
+                title = { Text("新对话") }
             )
         }
     ) { paddingValues ->

@@ -45,23 +45,6 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-//        val navHostFragment =
-//            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-//        val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
-//        lifecycleScope.launch {
-//            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                if (currentFragment is ChatFragment) {
-//                    val chatViewModel = currentFragment.viewModel
-//                    chatViewModel.collectState.collect { isCollected ->
-//                        val menu = binding.appBarMain.toolbar.menu
-//                        val favoriteItem = menu.findItem(R.id.action_favorites)
-//                        favoriteItem?.setIcon(if (isCollected) R.drawable.ic_favorite_24dp else R.drawable.ic_favorite_border_24dp)
-//                    }
-//                }
-//            }
-//        }
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.nav_chat, R.id.nav_history, R.id.nav_favourites, R.id.nav_settings
@@ -79,8 +62,9 @@ class MainActivity : AppCompatActivity() {
                 menu.findItem(R.id.action_favorites).isVisible = true
             } else if (shouldShowSureMenu) {
                 menu.findItem(R.id.action_sure).isVisible = true
+                menu.findItem(R.id.action_add).isVisible = true
+                menu.findItem(R.id.action_delete).isVisible = true
             }
-
             return true
         }
         return false
@@ -89,14 +73,25 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_favorites -> {
-                clickMenuItem()
+                clickMenuItem(R.id.action_favorites)
                 true
             }
 
             R.id.action_sure -> {
-                clickMenuItem()
+                clickMenuItem(R.id.action_sure)
                 true
             }
+
+            R.id.action_add -> {
+                clickMenuItem(R.id.action_add)
+                true
+            }
+
+            R.id.action_delete -> {
+                clickMenuItem(R.id.action_delete)
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
 //        if (item.getItemId() === R.id.action_favorites) {
@@ -112,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    fun clickMenuItem() {
+    fun clickMenuItem(id: Int) {
 //        val currentDestination = navController.currentDestination
 //        if (currentDestination != null) {
 //            // 获取当前Fragment的ID
@@ -129,7 +124,15 @@ class MainActivity : AppCompatActivity() {
         if (currentFragment is ChatFragment) {
             currentFragment.clickFavouriteMenuItem()
         } else if (currentFragment is FavouritesFragment) {
-            currentFragment.clickSureMenuItem()
+            if (id == R.id.action_add) {
+                currentFragment.clickAddMenuItem()
+            } else if (id == R.id.action_delete) {
+                currentFragment.clickDeleteMenuItem()
+            } else if (id == R.id.action_sure) {
+                currentFragment.clickSureMenuItem()
+            } else {
+                // TODO: 添加其他处理逻辑
+            }
         }
     }
 

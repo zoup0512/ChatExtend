@@ -35,9 +35,9 @@ fun convertToDataSource(rootNodes: List<CategoryTreeNode>): MultipleDataSource<S
 
     fun addNodeToDataSource(node: CategoryTreeNode, parentDataSource: MultipleDataSource<String>) {
         val dataSource = if (node.children.isEmpty()) {
-            SingleDataSource(name = node.name, data = node.name, parent = parentDataSource)
+            SingleDataSource(name = node.name, data = node.id.toString(), parent = parentDataSource)
         } else {
-            val multipleDataSource = MultipleDataSource<String>(name = node.name, data = node.name, parent = parentDataSource)
+            val multipleDataSource = MultipleDataSource<String>(name = node.name, data = node.id.toString(), parent = parentDataSource)
             node.children.forEach { child ->
                 addNodeToDataSource(child, multipleDataSource)
             }

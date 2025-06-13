@@ -21,4 +21,21 @@ class CategoryViewModel(private val messageCategoryRepository: MessageCategoryRe
             }
         }
     }
+
+    fun deleteMessageCategoryById(id: Int) {
+        viewModelScope.launch {
+            messageCategoryRepository.deleteMessageCategoryById(id).collect { list ->
+                _messageCategories.value = list
+            }
+        }
+    }
+
+    fun addMessageCategory(messageCategory: MessageCategoryEntity) {
+        viewModelScope.launch {
+            messageCategoryRepository.addMessageCategory(messageCategory).collect { list ->
+                _messageCategories.value = list
+            }
+        }
+    }
+
 }

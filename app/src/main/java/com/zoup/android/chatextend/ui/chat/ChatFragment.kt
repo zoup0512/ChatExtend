@@ -115,9 +115,12 @@ class ChatFragment : Fragment() {
     }
 
     public fun clickFavouriteMenuItem() {
-        val args = Bundle()
-//        args.putInt("categoryId", selectedCategoryId)
-        findNavController(root).navigate(R.id.nav_favourites, args)
+        if (viewModel.chatStateFlow.value.isCollected) {
+            viewModel.collectChatMessages(viewModel.chatStateFlow.value.categoryId)
+        } else {
+            val args = Bundle()
+            findNavController(root).navigate(R.id.nav_favourites, args)
+        }
     }
 
     // 检查权限

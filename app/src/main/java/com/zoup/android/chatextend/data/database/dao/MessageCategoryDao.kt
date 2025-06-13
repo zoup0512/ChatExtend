@@ -19,10 +19,13 @@ interface MessageCategoryDao {
 
     // 插入单条消息
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    fun insertMessageCategory(messageCategory: MessageCategoryEntity): Long
+    suspend fun insertMessageCategory(messageCategory: MessageCategoryEntity): Long
 
     @Delete
     fun deleteMessageCategory(messageCategory: MessageCategoryEntity)
+
+    @Query("DELETE FROM message_category WHERE id = :id")
+    suspend fun deleteMessageCategoryById(id: Int)
 
     @Query("SELECT * FROM message_category WHERE parentCategoryId = :id")
     fun getAllSubMessageCategories(id: Int): Flow<List<MessageCategoryEntity>>

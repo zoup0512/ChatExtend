@@ -69,6 +69,7 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
                     },
                     isLoading = false,
                     isCollected = chatMessageEntity.isCollected == true,
+                    categoryId = chatMessageEntity.categoryId
                 )
 
             }
@@ -132,7 +133,8 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
         collectStateFlow.update { state ->
             if (newChatMessageEntity != null) {
                 state.copy(
-                    isCollected = newChatMessageEntity.isCollected
+                    isCollected = newChatMessageEntity.isCollected,
+                    categoryId = newChatMessageEntity.categoryId
                 )
             } else {
                 state
