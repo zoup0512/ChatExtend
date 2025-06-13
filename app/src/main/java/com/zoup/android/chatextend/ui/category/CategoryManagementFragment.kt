@@ -27,9 +27,6 @@ import org.koin.androidx.viewmodel.ext.android.getViewModel
 class CategoryManagementFragment : Fragment() {
 
     private var _binding: FragmentCategoryBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
     private lateinit var root: View
     private var selectedCategoryId: Int = -1

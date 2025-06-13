@@ -98,7 +98,7 @@ class ChatFragment : Fragment() {
             this
         ) { requestKey, resultBundle ->
             val categoryId = resultBundle.getInt(Constants.CATEGORY_ID_KEY)
-            if (categoryId != -0 && categoryId != -1) {
+            if (categoryId != 0 && categoryId != -1) {
                 viewModel.collectChatMessages(categoryId)
             }
         }

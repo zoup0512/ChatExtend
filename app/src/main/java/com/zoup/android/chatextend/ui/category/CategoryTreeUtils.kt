@@ -18,7 +18,10 @@ fun buildCategoryTree(categories: List<MessageCategoryEntity>): List<CategoryTre
 
     for (category in categories) {
         val node = nodeMap[category.id]!!
-        if (category.parentCategoryId == -1 || !nodeMap.containsKey(category.parentCategoryId)) {
+        if (category.parentCategoryId == -1 || category.parentCategoryId == 0 || !nodeMap.containsKey(
+                category.parentCategoryId
+            )
+        ) {
             // 如果 parentCategoryId 是 -1 或者父节点不存在，则作为根节点
             rootNodes.add(node)
         } else {
