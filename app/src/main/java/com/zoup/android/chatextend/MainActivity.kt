@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -17,6 +18,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.zoup.android.chatextend.databinding.ActivityMainBinding
 import com.zoup.android.chatextend.ui.category.CategoryManagementFragment
 import com.zoup.android.chatextend.ui.chat.ChatFragment
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
@@ -139,6 +142,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setFavouriteMenuChecked(checked: Boolean) {
+        if (mainMenu == null) {
+            Log.w("MainActivity", "无法找到mainMenu")
+        }
         val favouriteMenu: MenuItem? = mainMenu?.findItem(R.id.action_favorites)
         if (favouriteMenu != null) {
             if (checked) {
@@ -147,7 +153,14 @@ class MainActivity : AppCompatActivity() {
                 favouriteMenu.setIcon(R.drawable.ic_favorite_unchecked_24dp)
             }
         } else {
-            Log.w("MainActivity", "mainMenu 或 menuItem 为 null")
+            Log.w("MainActivity", "无法找到favouriteMenu")
+            if (checked) {
+                lifecycleScope.launch {
+                    delay(200)
+                    val favouriteMenu: MenuItem? = mainMenu?.findItem(R.id.action_favorites)
+                    favouriteMenu?.setIcon(R.drawable.ic_favorite_checked_24dp)
+                }
+            }
         }
     }
 

@@ -10,10 +10,10 @@ import androidx.lifecycle.lifecycleScope
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.data.database.entity.MessageCategoryEntity
 import com.zoup.android.chatextend.databinding.FragmentNotesBinding
-import com.zoup.android.chatextend.ui.category.CategoryViewModel
-import com.zoup.android.chatextend.ui.category.ViewBinder
-import com.zoup.android.chatextend.ui.category.buildCategoryTree
-import com.zoup.android.chatextend.ui.category.convertToDataSource
+import com.zoup.android.chatextend.ui.notes.NotesViewModel
+import com.zoup.android.chatextend.ui.notes.NotesViewBinder
+import com.zoup.android.chatextend.ui.notes.buildCategoryTree
+import com.zoup.android.chatextend.ui.notes.convertToDataSource
 import io.github.dingyi222666.view.treeview.DataSource
 import io.github.dingyi222666.view.treeview.DataSourceNodeGenerator
 import io.github.dingyi222666.view.treeview.Tree
@@ -27,7 +27,7 @@ class NotesFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var root: View
     private var selectedCategoryId: Int = -1
-    private lateinit var categoryViewModel: CategoryViewModel
+    private lateinit var notesViewModel: NotesViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,14 +38,14 @@ class NotesFragment : Fragment() {
             (activity as MainActivity).setFavouriteMenuVisibility(false)
             (activity as MainActivity).setSureMenuVisibility(false)
         }
-        categoryViewModel = getViewModel<CategoryViewModel>()
+        notesViewModel = getViewModel<NotesViewModel>()
 
         _binding = FragmentNotesBinding.inflate(inflater, container, false)
         root = binding.root
 
         // 初始化 TreeView，先设置 binder 等属性，但暂不绑定 tree
         val treeView = binding.treeview as TreeView<DataSource<String>>
-        val myBinder = ViewBinder().apply {
+        val myBinder = NotesViewBinder().apply {
             onNodeLongClickListener = { node ->
                 val str = node.data?.data
                 str?.toInt()?.let {
@@ -61,7 +61,7 @@ class NotesFragment : Fragment() {
 //            selectionMode = TreeView.SelectionMode.SINGLE
         }
 
-        categoryViewModel.messageCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
+        notesViewModel.messageCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
             val tree = createTree(categories ?: emptyList())
             treeView.tree = tree
             treeView.selectionMode = TreeView.SelectionMode.NONE

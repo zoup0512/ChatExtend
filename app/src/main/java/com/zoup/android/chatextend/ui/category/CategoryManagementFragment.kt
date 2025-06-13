@@ -50,7 +50,7 @@ class CategoryManagementFragment : Fragment() {
 
         // 初始化 TreeView，先设置 binder 等属性，但暂不绑定 tree
         val treeView = binding.treeview as TreeView<DataSource<String>>
-        val myBinder = ViewBinder().apply {
+        val myBinder = CategoryViewBinder().apply {
             onNodeLongClickListener = { node ->
                 val str = node.data?.data
                 str?.toInt()?.let {

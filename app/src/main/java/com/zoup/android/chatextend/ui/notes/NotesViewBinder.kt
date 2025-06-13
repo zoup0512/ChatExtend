@@ -1,4 +1,4 @@
-package com.zoup.android.chatextend.ui.category
+package com.zoup.android.chatextend.ui.notes
 
 import android.content.res.Resources
 import android.view.LayoutInflater
@@ -18,7 +18,7 @@ import io.github.dingyi222666.view.treeview.TreeNodeEventListener
 import io.github.dingyi222666.view.treeview.TreeView
 import io.github.dingyi222666.view.treeview.TreeViewBinder
 
-class CategoryViewBinder : TreeViewBinder<DataSource<String>>(),
+class NotesViewBinder : TreeViewBinder<DataSource<String>>(),
     TreeNodeEventListener<DataSource<String>> {
     // 定义回调接口
     public var onNodeLongClickListener: ((TreeNode<DataSource<String>>) -> Unit)? = null

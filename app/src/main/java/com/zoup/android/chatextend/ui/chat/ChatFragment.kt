@@ -82,7 +82,7 @@ class ChatFragment : Fragment() {
         init()
         viewModel.chatStateFlow.asLiveData().observe(viewLifecycleOwner) { collectState ->
             if (requireActivity() is MainActivity) {
-                Log.d("ChatFragment", "准备调用 setFavouriteMenuChecked")
+                Log.d("ChatFragment", "准备调用setFavouriteMenuChecked:isCollected=${collectState.isCollected}")
                 (activity as MainActivity).setFavouriteMenuChecked(collectState.isCollected)
             }
         }
