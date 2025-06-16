@@ -7,7 +7,8 @@ import java.util.Date
 @Entity(tableName = "message_category")
 data class MessageCategoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Int,
+    val messageId: String? = null,
     val name: String,
-    val parentCategoryId: Int = -1,
+    val parentCategoryId: Int,
     val timestamp: Long = Date().time
 )

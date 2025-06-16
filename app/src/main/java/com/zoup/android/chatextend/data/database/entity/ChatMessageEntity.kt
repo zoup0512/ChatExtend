@@ -7,7 +7,7 @@ import java.util.Date
 @Entity(tableName = "chat_message")
 data class ChatMessageEntity(
     @PrimaryKey val id: String,
-    val title: String? = "",
+    val title: String,
     val content: String,
     val timestamp: Long = Date().time,
     val isCollected: Boolean = false,

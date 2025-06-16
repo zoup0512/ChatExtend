@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.databinding.FragmentSettingsBinding
+import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.encryptString
 
 class SettingsFragment : Fragment() {
@@ -44,7 +45,7 @@ class SettingsFragment : Fragment() {
         val textView: TextView = binding.tvKey
         viewModel.text.observe(viewLifecycleOwner) {
             textView.text = encryptString(it, 4, 4)
-//            Constants.DEEPSEEK_API_KEY = it
+            Constants.DEEPSEEK_API_KEY = it
         }
         return root
     }

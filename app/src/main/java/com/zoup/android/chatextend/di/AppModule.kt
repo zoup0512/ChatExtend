@@ -5,8 +5,9 @@ import com.zoup.android.chatextend.ChatApplication
 import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.data.repository.MessageCategoryRepository
-import com.zoup.android.chatextend.ui.chat.ChatViewModel
+import com.zoup.android.chatextend.data.repository.NotesRepository
 import com.zoup.android.chatextend.ui.category.CategoryViewModel
+import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.ui.notes.NotesViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -33,6 +34,8 @@ val appModule = module {
     single { ChatMessageRepository(get()) }
 
     single {  MessageCategoryRepository(get())}
+
+    single { NotesRepository(get(), get()) }
 
     // 提供 ChatViewModel 实例，依赖 ChatRepository
     viewModel { ChatViewModel(get()) }

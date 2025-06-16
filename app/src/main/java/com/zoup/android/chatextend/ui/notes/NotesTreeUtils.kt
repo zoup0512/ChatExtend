@@ -6,13 +6,16 @@ import io.github.dingyi222666.view.treeview.SingleDataSource
 
 data class CategoryTreeNode(
     val id: Int,
+    val messageId: String?,
     val name: String,
     val parentId: Int,
     var children: MutableList<CategoryTreeNode> = mutableListOf()
 )
 
 fun buildCategoryTree(categories: List<MessageCategoryEntity>): List<CategoryTreeNode> {
-    val nodeMap = categories.associateBy({ it.id }, { CategoryTreeNode(it.id, it.name, it.parentCategoryId) })
+    val nodeMap = categories.associateBy(
+        { it.id },
+        { CategoryTreeNode(it.id, it.messageId, it.name, it.parentCategoryId) })
 
     val rootNodes = mutableListOf<CategoryTreeNode>()
 
@@ -38,9 +41,13 @@ fun convertToDataSource(rootNodes: List<CategoryTreeNode>): MultipleDataSource<S
 
     fun addNodeToDataSource(node: CategoryTreeNode, parentDataSource: MultipleDataSource<String>) {
         val dataSource = if (node.children.isEmpty()) {
-            SingleDataSource(name = node.name, data = node.id.toString(), parent = parentDataSource)
+            SingleDataSource(name = node.name, data = node.messageId, parent = parentDataSource)
         } else {
-            val multipleDataSource = MultipleDataSource<String>(name = node.name, data = node.id.toString(), parent = parentDataSource)
+            val multipleDataSource = MultipleDataSource<String>(
+                name = node.name,
+                data = node.messageId,
+                parent = parentDataSource
+            )
             node.children.forEach { child ->
                 addNodeToDataSource(child, multipleDataSource)
             }

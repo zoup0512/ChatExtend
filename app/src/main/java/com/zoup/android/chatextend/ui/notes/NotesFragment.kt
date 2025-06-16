@@ -7,13 +7,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.Navigation.findNavController
 import com.zoup.android.chatextend.MainActivity
+import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.data.database.entity.MessageCategoryEntity
 import com.zoup.android.chatextend.databinding.FragmentNotesBinding
-import com.zoup.android.chatextend.ui.notes.NotesViewModel
-import com.zoup.android.chatextend.ui.notes.NotesViewBinder
-import com.zoup.android.chatextend.ui.notes.buildCategoryTree
-import com.zoup.android.chatextend.ui.notes.convertToDataSource
+import com.zoup.android.chatextend.ui.category.CategoryViewModel
+import com.zoup.android.chatextend.utils.Constants
 import io.github.dingyi222666.view.treeview.DataSource
 import io.github.dingyi222666.view.treeview.DataSourceNodeGenerator
 import io.github.dingyi222666.view.treeview.Tree
@@ -28,6 +28,7 @@ class NotesFragment : Fragment() {
     private lateinit var root: View
     private var selectedCategoryId: Int = -1
     private lateinit var notesViewModel: NotesViewModel
+    private lateinit var categoryViewModel: CategoryViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,6 +40,7 @@ class NotesFragment : Fragment() {
             (activity as MainActivity).setSureMenuVisibility(false)
         }
         notesViewModel = getViewModel<NotesViewModel>()
+        categoryViewModel = getViewModel<CategoryViewModel>()
 
         _binding = FragmentNotesBinding.inflate(inflater, container, false)
         root = binding.root
@@ -46,11 +48,15 @@ class NotesFragment : Fragment() {
         // 初始化 TreeView，先设置 binder 等属性，但暂不绑定 tree
         val treeView = binding.treeview as TreeView<DataSource<String>>
         val myBinder = NotesViewBinder().apply {
-            onNodeLongClickListener = { node ->
-                val str = node.data?.data
-                str?.toInt()?.let {
-                    selectedCategoryId = it
+            onNoteItemClickListener = { node ->
+                if (!node.hasChild) {
+                    // 跳转到 NoteDetailActivity，并传递参数
+                    val args = Bundle().apply {
+                        putInt(Constants.CHAT_VIEW_MODEL, Constants.MODEL_VIEW)
+                    }
+                    findNavController(root).navigate(R.id.nav_chat, args)
                 }
+
             }
         }
         treeView.apply {
@@ -61,7 +67,7 @@ class NotesFragment : Fragment() {
 //            selectionMode = TreeView.SelectionMode.SINGLE
         }
 
-        notesViewModel.messageCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
+        notesViewModel.mergedCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
             val tree = createTree(categories ?: emptyList())
             treeView.tree = tree
             treeView.selectionMode = TreeView.SelectionMode.NONE
@@ -69,6 +75,15 @@ class NotesFragment : Fragment() {
                 treeView.refresh()
             }
         }
+
+//        categoryViewModel.messageCategories.asLiveData().observe(viewLifecycleOwner) { categories ->
+//            val tree = createTree(categories ?: emptyList())
+//            treeView.tree = tree
+//            treeView.selectionMode = TreeView.SelectionMode.SINGLE
+//            lifecycleScope.launch {
+//                treeView.refresh()
+//            }
+//        }
         return root
     }
 

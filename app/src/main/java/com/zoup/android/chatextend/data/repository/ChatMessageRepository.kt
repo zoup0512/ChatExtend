@@ -159,6 +159,7 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
             chatMessageDao.insertMessage(
                 ChatMessageEntity(
                     id = messageId,
+                    title = userInput,
                     content = Gson().toJson(newMessages).toString()
                 )
             )
@@ -166,6 +167,7 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
             chatMessageDao.updateMessage(
                 ChatMessageEntity(
                     id = messageId,
+                    title = userInput,
                     content = Gson().toJson(newMessages).toString()
                 )
             )
@@ -353,10 +355,14 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
             state.copy(messages = updatedMessages)
         }
 
+        // 获取当前实体对象以保留 title
+        val existingMessage = chatMessageDao.getMessageByIdSync(messageId)
+        val originalTitle = existingMessage?.title ?: "Untitled"
         // 更新数据库中的助手消息
         chatMessageDao.updateMessage(
             ChatMessageEntity(
                 id = messageId,
+                title = originalTitle,
                 content = buildContentWithChatState(chatState)
             )
         )

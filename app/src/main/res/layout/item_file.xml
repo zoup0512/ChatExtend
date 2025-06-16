@@ -43,7 +43,8 @@
         android:layout_gravity="center_vertical"
         android:clickable="false"
         android:focusable="false"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:buttonTint="@android:color/holo_green_light"/>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/tv_name"

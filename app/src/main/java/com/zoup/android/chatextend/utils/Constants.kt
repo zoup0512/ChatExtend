@@ -7,5 +7,9 @@ class Constants {
         const val REQUEST_STORAGE_PERMISSION = 1001
         const val NO_DATA_SYMBOL = -1
         const val CATEGORY_FRAGMENT_REQUEST_KEY = "category_fragment_request_key"
+
+        const val CHAT_VIEW_MODEL = "chat_view_model"
+        const val MODEL_VIEW = 1
+        const val MODEL_EDIT = 2
     }
 }

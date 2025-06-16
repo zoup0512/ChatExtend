@@ -5,13 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Space
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.widget.TextViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.zoup.android.chatextend.R
 import com.zoup.android.chatextend.databinding.ItemDirBinding
-import com.zoup.android.chatextend.databinding.ItemFileBinding
+import com.zoup.android.chatextend.databinding.ItemFileSimpleBinding
 import io.github.dingyi222666.view.treeview.DataSource
 import io.github.dingyi222666.view.treeview.TreeNode
 import io.github.dingyi222666.view.treeview.TreeNodeEventListener
@@ -21,14 +23,13 @@ import io.github.dingyi222666.view.treeview.TreeViewBinder
 class NotesViewBinder : TreeViewBinder<DataSource<String>>(),
     TreeNodeEventListener<DataSource<String>> {
     // 定义回调接口
-    public var onNodeLongClickListener: ((TreeNode<DataSource<String>>) -> Unit)? = null
-
+    var onNoteItemClickListener: OnNoteItemClickListener? = null
     override fun createView(parent: ViewGroup, viewType: Int): View {
         val layoutInflater = LayoutInflater.from(parent.context)
         return if (viewType == 1) {
             ItemDirBinding.inflate(layoutInflater, parent, false).root
         } else {
-            ItemFileBinding.inflate(layoutInflater, parent, false).root
+            ItemFileSimpleBinding.inflate(layoutInflater, parent, false).root
         }
     }
 
@@ -59,8 +60,22 @@ class NotesViewBinder : TreeViewBinder<DataSource<String>>(),
     }
 
     private fun applyFile(holder: TreeView.ViewHolder, node: TreeNode<DataSource<String>>) {
-        val binding = ItemFileBinding.bind(holder.itemView)
+        val binding = ItemFileSimpleBinding.bind(holder.itemView)
+        val messageId = node.data?.data
         binding.tvName.text = node.name.toString()
+        val resId = if (messageId.isNullOrEmpty()) {
+            R.drawable.baseline_folder_24
+        } else {
+            R.drawable.baseline_insert_drive_file_24
+        }
+        val icon = ContextCompat.getDrawable(binding.tvName.context, resId)
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            binding.tvName,
+            icon,
+            null,
+            null,
+            null
+        )
 
     }
 
@@ -92,13 +107,16 @@ class NotesViewBinder : TreeViewBinder<DataSource<String>>(),
         return if (node.isChild) {
             ItemDirBinding.bind(holder.itemView).checkbox
         } else {
-            ItemFileBinding.bind(holder.itemView).checkbox
+            ItemFileSimpleBinding.bind(holder.itemView).checkbox
         }
 //        return ItemDirBinding.bind(holder.itemView).checkbox
     }
 
     override fun onClick(node: TreeNode<DataSource<String>>, holder: TreeView.ViewHolder) {
 //        Toast.makeText(this@MainActivity, "Clicked ${node.name}", Toast.LENGTH_LONG).show()
+        // 触发回调
+        onNoteItemClickListener?.invoke(node)
+
     }
 
     override fun onMoveView(
@@ -135,10 +153,11 @@ class NotesViewBinder : TreeViewBinder<DataSource<String>>(),
     }
 
     override fun onLongClick(node: TreeNode<DataSource<String>>, holder: TreeView.ViewHolder): Boolean {
-        onNodeLongClickListener?.invoke(node)
         return true
     }
 }
 
 inline val Int.dp: Int
     get() = (Resources.getSystem().displayMetrics.density * this + 0.5f).toInt()
+
+typealias OnNoteItemClickListener = (node: TreeNode<DataSource<String>>) -> Unit

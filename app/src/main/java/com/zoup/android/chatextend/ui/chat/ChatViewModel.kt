@@ -37,16 +37,6 @@ class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : 
         _chatStateFlow.value = ChatState() // 重置为初始状态
     }
 
-
-    /**
-     * 清空当前聊天界面及数据库中的历史记录
-     */
-    fun clearChatHistory() {
-        viewModelScope.launch {
-            chatMessageRepository.clearChat(_chatStateFlow)
-        }
-    }
-
     /**
      * 获取所有历史消息（用于在 HistoryScreen 中展示）
      */
