@@ -38,6 +38,7 @@ class NotesRepository(
                 timestamp = message.timestamp
             )
         }
+            .filter { it.parentCategoryId != 0 && it.parentCategoryId != -1 }
     }
 
 }
