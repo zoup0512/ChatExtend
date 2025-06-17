@@ -115,11 +115,15 @@ class ChatFragment : Fragment() {
     }
 
     public fun clickFavouriteMenuItem() {
-        if (viewModel.chatStateFlow.value.isCollected) {
-            viewModel.collectChatMessages(viewModel.chatStateFlow.value.categoryId)
+        if (!MessageIdManager.currentMessageId.isNullOrEmpty()) {
+            if (viewModel.chatStateFlow.value.isCollected) {
+                viewModel.collectChatMessages(viewModel.chatStateFlow.value.categoryId)
+            } else {
+                val args = Bundle()
+                findNavController(root).navigate(R.id.nav_category, args)
+            }
         } else {
-            val args = Bundle()
-            findNavController(root).navigate(R.id.nav_category, args)
+            Toast.makeText(requireContext(), "请先开始对话再收藏！", Toast.LENGTH_SHORT).show()
         }
     }
 
