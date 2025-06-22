@@ -16,3 +16,7 @@ local.properties
 /.idea/
 /.kotlin/errors/
 /.idea/
+/release/output-metadata.json
+/release/baselineProfiles/
+/app/release/
+/keystore/

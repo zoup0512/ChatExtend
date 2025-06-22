@@ -49,7 +49,7 @@ class NotesFragment : Fragment() {
         val treeView = binding.treeview as TreeView<DataSource<String>>
         val myBinder = NotesViewBinder().apply {
             onNoteItemClickListener = { node ->
-                if (!node.hasChild) {
+                if (!node.hasChild && node.isChild) {
                     // 跳转到 NoteDetailActivity，并传递参数
                     val args = Bundle().apply {
                         putInt(Constants.CHAT_VIEW_MODEL, Constants.MODEL_VIEW)
