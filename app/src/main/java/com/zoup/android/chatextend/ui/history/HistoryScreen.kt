@@ -2,22 +2,39 @@ package com.zoup.android.chatextend.ui.history
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.findNavController
@@ -29,6 +46,9 @@ import com.zoup.android.chatextend.data.api.model.Message
 import com.zoup.android.chatextend.data.database.entity.ChatMessageEntity
 import com.zoup.android.chatextend.ui.chat.ChatViewModel
 import com.zoup.android.chatextend.utils.MessageIdManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,40 +63,103 @@ fun HistoryScreen(
         activity.findNavController(R.id.nav_host_fragment_content_main)
     }
 
+    var searchQuery by remember { mutableStateOf("") }
+
+    // 过滤历史记录
+    val filteredHistory = remember(history, searchQuery) {
+        if (searchQuery.isEmpty()) {
+            history
+        } else {
+            history.filter { message ->
+                val type = object : TypeToken<List<Message>>() {}.type
+                val jsonContent = message.content
+                if (jsonContent.isNotEmpty()) {
+                    val messages = Gson().fromJson<List<Message>>(jsonContent, type)
+                    messages.any { it.content.contains(searchQuery, ignoreCase = true) }
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
     // 分组逻辑
     val now = System.currentTimeMillis()
-    val groupedHistory = history.groupBy { message ->
+    val groupedHistory = filteredHistory.groupBy { message ->
         val diffDays = (now - message.timestamp) / (24 * 60 * 60 * 1000)
         when {
-            diffDays < 1 -> "1天内"
-            diffDays < 7 -> "7天内"
-            diffDays < 30 -> "30天内"
+            diffDays < 1 -> "今天"
+            diffDays < 2 -> "昨天"
+            diffDays < 7 -> "最近7天"
+            diffDays < 30 -> "最近30天"
             diffDays < 365 -> "一年内"
             else -> "更早"
         }
     }
 
-    val groupOrder = listOf("1天内", "7天内", "30天内", "一年内", "更早")
+    val groupOrder = listOf("今天", "昨天", "最近7天", "最近30天", "一年内", "更早")
     val sortedGroups = groupedHistory.entries.sortedBy { groupOrder.indexOf(it.key) }
 
-    Scaffold(topBar = {
-//        TopAppBar(title = { Text("历史记录") })
-    }) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding)) {
-            for ((group, messages) in sortedGroups) {
-                item {
-                    Text(
-                        text = group,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = androidx.compose.ui.graphics.Color.Gray,
-                        fontSize = 12.sp
-                    )
-                }
-                items(messages) { message ->
-                    HistoryItem(message = message, onClick = {
-                        MessageIdManager.currentMessageId = message.id
-                        navController.navigate(R.id.nav_chat)
-                    })
+    Scaffold(
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("搜索对话内容...") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "搜索")
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "清除")
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(24.dp)
+                )
+            }
+        }
+    ) { padding ->
+        if (filteredHistory.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(padding)
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (searchQuery.isEmpty()) "暂无历史记录" else "未找到匹配的对话",
+                    color = Color.Gray,
+                    fontSize = 16.sp
+                )
+            }
+        } else {
+            LazyColumn(modifier = Modifier.padding(padding)) {
+                for ((group, messages) in sortedGroups) {
+                    item {
+                        Text(
+                            text = "$group (${messages.size})",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                    items(messages) { message ->
+                        HistoryItem(message = message, onClick = {
+                            MessageIdManager.currentMessageId = message.id
+                            navController.navigate(R.id.nav_chat)
+                        })
+                    }
                 }
             }
         }
@@ -91,25 +174,58 @@ fun HistoryItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-//            .padding(top = 2.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RectangleShape,
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             val type = object : TypeToken<List<Message>>() {}.type
             val jsonContent = message.content
             if (jsonContent.isNotEmpty()) {
                 val messages = Gson().fromJson<List<Message>>(jsonContent, type)
                 if (messages.isNotEmpty()) {
+                    // 显示第一条用户消息作为标题
                     val userMessage = messages.firstOrNull { it.role == "user" }
-                    val title = userMessage?.content
-                    Text(text = "${title?.take(30)}", modifier = Modifier.padding(start = 10.dp))
+                    val title = userMessage?.content ?: "无标题"
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 显示消息数量和时间
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${messages.size} 条消息",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = formatTimestamp(message.timestamp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun formatTimestamp(timestamp: Long): String {
+    val sdf = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }

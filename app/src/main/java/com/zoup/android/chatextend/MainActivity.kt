@@ -1,10 +1,12 @@
 package com.zoup.android.chatextend
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
@@ -33,6 +35,9 @@ class MainActivity : AppCompatActivity() {
     private var shouldShowSureMenu = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 应用保存的主题设置
+        applyTheme()
+        
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -59,6 +64,12 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+    }
+
+    private fun applyTheme() {
+        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val themeMode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        AppCompatDelegate.setDefaultNightMode(themeMode)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

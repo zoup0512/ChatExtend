@@ -377,8 +377,17 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
         chatState: MutableStateFlow<ChatState>
     ) {
         val errorMessage = when (e) {
-            is HttpException -> "API Error: ${e.code()} - ${e.response()?.errorBody()?.string()}"
-            else -> "Network Error: ${e.localizedMessage}"
+            is HttpException -> {
+                when (e.code()) {
+                    401 -> "API密钥无效,请在设置中检查"
+                    429 -> "请求过于频繁,请稍后再试"
+                    500, 502, 503 -> "服务器错误,请稍后再试"
+                    else -> "请求失败: ${e.message()}"
+                }
+            }
+            is java.net.UnknownHostException -> "网络连接失败,请检查网络设置"
+            is java.net.SocketTimeoutException -> "请求超时,请检查网络连接"
+            else -> "发生错误: ${e.localizedMessage ?: "未知错误"}"
         }
 
         updateAssistantMessage(
@@ -387,6 +396,11 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
             isPending = false,
             chatState = chatState
         )
+
+        // 更新错误状态
+        chatState.update { state ->
+            state.copy(error = errorMessage)
+        }
     }
 
     /**
@@ -401,6 +415,22 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
      */
     fun getAllHistoryMessages(): Flow<List<ChatMessageEntity>> {
         return chatMessageDao.getAllMessages()
+    }
+
+    /**
+     * 更新聊天状态到数据库
+     */
+    suspend fun updateChatState(chatState: StateFlow<ChatState>) {
+        val messageId = MessageIdManager.currentMessageId
+        if (!messageId.isNullOrEmpty()) {
+            val content = buildContentWithChatState(chatState)
+            val existingMessage = chatMessageDao.getMessageByIdSync(messageId)
+            if (existingMessage != null) {
+                chatMessageDao.updateMessage(
+                    existingMessage.copy(content = content)
+                )
+            }
+        }
     }
 
     private fun buildContentWithChatState(

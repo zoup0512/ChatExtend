@@ -4,5 +4,6 @@ data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
     val isCollected: Boolean = false,
-    val categoryId: Int = -1
+    val categoryId: Int = -1,
+    val error: String? = null
 )

@@ -1,7 +1,10 @@
 package com.zoup.android.chatextend.ui.chat
 
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,17 +24,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,7 +53,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -63,6 +76,14 @@ fun ChatScreen(
     val context = LocalContext.current
     val markwon = remember { Markwon.create(context) }
     var userInput by remember { mutableStateOf("") }
+
+    // 显示错误提示
+    LaunchedEffect(chatState.error) {
+        chatState.error?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
 
     // 自动滚动到最后一条消息
     LaunchedEffect(chatState.messages.size) {
@@ -96,10 +117,16 @@ fun ChatScreen(
             ) {
                 items(chatState.messages) { message ->
                     when (message) {
-                        is ChatMessage.UserMessage -> UserMessageItem(message)
+                        is ChatMessage.UserMessage -> UserMessageItem(
+                            message = message,
+                            onCopy = { viewModel.copyMessage(it) },
+                            onDelete = { viewModel.deleteMessage(it) }
+                        )
                         is ChatMessage.AssistantMessage -> AssistantMessageItem(
                             message = message,
-                            markwon = markwon
+                            markwon = markwon,
+                            onCopy = { viewModel.copyMessage(it) },
+                            onRegenerate = { viewModel.regenerateMessage(it) }
                         )
                         else -> {
                             // 可选占位内容或日志上报
@@ -157,7 +184,7 @@ fun ChatScreen(
                         }
                     ),
                     singleLine = false,
-                    maxLines = 3
+                    maxLines = 5
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
@@ -191,76 +218,178 @@ fun ChatScreen(
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun UserMessageItem(
     message: ChatMessage.UserMessage,
+    onCopy: (String) -> Unit,
+    onDelete: (ChatMessage.UserMessage) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 16.dp)
-        ) {
-            Text(
-                text = message.content,
-                modifier = Modifier.padding(16.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+        Box {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 16.dp),
+                modifier = Modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = { showMenu = true }
+                )
+            ) {
+                Text(
+                    text = message.content,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("复制") },
+                    onClick = {
+                        onCopy(message.content)
+                        Toast.makeText(context, "已复制", Toast.LENGTH_SHORT).show()
+                        showMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("删除") },
+                    onClick = {
+                        showMenu = false
+                        showDeleteDialog = true
+                    },
+                    leadingIcon = {
+                        Icon(Icons.Default.Delete, contentDescription = "删除")
+                    }
+                )
+            }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("删除消息") },
+            text = { Text("确定要删除这条消息吗?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(message)
+                        showDeleteDialog = false
+                        Toast.makeText(context, "已删除", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AssistantMessageItem(
     message: ChatMessage.AssistantMessage,
     markwon: Markwon,
+    onCopy: (String) -> Unit,
+    onRegenerate: (ChatMessage.AssistantMessage) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                if (message.isPending && message.content.isEmpty()) {
-                    // 初始加载状态
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Text("思考中...")
+        Box {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp),
+                modifier = Modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = { 
+                        if (!message.isPending) {
+                            showMenu = true 
+                        }
                     }
-                } else {
-                    // 流式内容或完整内容
-                    ComposeMarkdownText(
-                        markdown = message.content,
-                        markwon = markwon
-                    )
-
-                    if (message.isPending) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    if (message.isPending && message.content.isEmpty()) {
+                        // 初始加载状态
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text("思考中...")
+                        }
+                    } else {
+                        // 流式内容或完整内容
+                        ComposeMarkdownText(
+                            markdown = message.content,
+                            markwon = markwon
                         )
+
+                        if (message.isPending) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
                     }
                 }
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("复制") },
+                    onClick = {
+                        onCopy(message.content)
+                        Toast.makeText(context, "已复制", Toast.LENGTH_SHORT).show()
+                        showMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("重新生成") },
+                    onClick = {
+                        onRegenerate(message)
+                        Toast.makeText(context, "正在重新生成...", Toast.LENGTH_SHORT).show()
+                        showMenu = false
+                    },
+                    leadingIcon = {
+                        Icon(Icons.Default.Refresh, contentDescription = "重新生成")
+                    }
+                )
             }
         }
     }
