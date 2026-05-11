@@ -148,4 +148,25 @@ class ChatViewModel(private val chatMessageRepository: ChatMessageRepository) : 
         _chatStateFlow.update { it.copy(error = null) }
     }
 
+    /**
+     * 重命名对话
+     */
+    fun renameConversation(messageId: String, newTitle: String) {
+        viewModelScope.launch {
+            val message = chatMessageRepository.getMessageById(messageId)
+            if (message != null) {
+                chatMessageRepository.updateMessage(message.copy(title = newTitle))
+            }
+        }
+    }
+
+    /**
+     * 删除对话
+     */
+    fun deleteConversation(messageId: String) {
+        viewModelScope.launch {
+            chatMessageRepository.deleteMessage(messageId)
+        }
+    }
+
 }

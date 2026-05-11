@@ -433,6 +433,30 @@ class ChatMessageRepository(private val chatMessageDao: ChatMessageDao) {
         }
     }
 
+    /**
+     * 根据ID获取消息
+     */
+    suspend fun getMessageById(messageId: String): ChatMessageEntity? {
+        return chatMessageDao.getMessageByIdSync(messageId)
+    }
+
+    /**
+     * 更新消息
+     */
+    suspend fun updateMessage(message: ChatMessageEntity) {
+        chatMessageDao.updateMessage(message)
+    }
+
+    /**
+     * 删除消息
+     */
+    suspend fun deleteMessage(messageId: String) {
+        val message = chatMessageDao.getMessageByIdSync(messageId)
+        if (message != null) {
+            chatMessageDao.deleteMessage(message)
+        }
+    }
+
     private fun buildContentWithChatState(
         chatState: StateFlow<ChatState>
     ): String {

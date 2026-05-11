@@ -1,6 +1,10 @@
 package com.zoup.android.chatextend.ui.history
 
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,9 +17,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -155,10 +166,22 @@ fun HistoryScreen(
                         )
                     }
                     items(messages) { message ->
-                        HistoryItem(message = message, onClick = {
-                            MessageIdManager.currentMessageId = message.id
-                            navController.navigate(R.id.nav_chat)
-                        })
+                        HistoryItem(
+                            message = message,
+                            onClick = {
+                                MessageIdManager.currentMessageId = message.id
+                                navController.navigate(R.id.nav_chat)
+                            },
+                            onRename = { newTitle ->
+                                viewModel.renameConversation(message.id, newTitle)
+                            },
+                            onDelete = {
+                                viewModel.deleteConversation(message.id)
+                            },
+                            onShare = {
+                                showShareDialog(context, message)
+                            }
+                        )
                     }
                 }
             }
@@ -166,62 +189,191 @@ fun HistoryScreen(
     }
 }
 
+private fun showShareDialog(context: android.content.Context, message: ChatMessageEntity) {
+    val options = arrayOf("分享为文本", "分享为Markdown", "分享为图片")
+    
+    androidx.appcompat.app.AlertDialog.Builder(context)
+        .setTitle("选择分享方式")
+        .setItems(options) { _, which ->
+            when (which) {
+                0 -> com.zoup.android.chatextend.utils.ShareUtils.shareAsText(context, message)
+                1 -> com.zoup.android.chatextend.utils.ShareUtils.shareAsMarkdown(context, message)
+                2 -> com.zoup.android.chatextend.utils.ShareUtils.shareAsImage(context, message)
+            }
+        }
+        .show()
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryItem(
     message: ChatMessageEntity,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onRename: (String) -> Unit,
+    onDelete: () -> Unit,
+    onShare: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+    var showMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    Box {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { showMenu = true }
+                ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            val type = object : TypeToken<List<Message>>() {}.type
-            val jsonContent = message.content
-            if (jsonContent.isNotEmpty()) {
-                val messages = Gson().fromJson<List<Message>>(jsonContent, type)
-                if (messages.isNotEmpty()) {
-                    // 显示第一条用户消息作为标题
-                    val userMessage = messages.firstOrNull { it.role == "user" }
-                    val title = userMessage?.content ?: "无标题"
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // 显示消息数量和时间
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                val type = object : TypeToken<List<Message>>() {}.type
+                val jsonContent = message.content
+                if (jsonContent.isNotEmpty()) {
+                    val messages = Gson().fromJson<List<Message>>(jsonContent, type)
+                    if (messages.isNotEmpty()) {
+                        // 显示标题(优先使用自定义标题)
+                        val title = if (message.title.isNotEmpty()) {
+                            message.title
+                        } else {
+                            val userMessage = messages.firstOrNull { it.role == "user" }
+                            userMessage?.content ?: "无标题"
+                        }
                         Text(
-                            text = "${messages.size} 条消息",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = formatTimestamp(message.timestamp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 显示消息数量和时间
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${messages.size} 条消息",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = formatTimestamp(message.timestamp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
         }
+
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("重命名") },
+                onClick = {
+                    showMenu = false
+                    showRenameDialog = true
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Edit, contentDescription = "重命名")
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("分享") },
+                onClick = {
+                    showMenu = false
+                    onShare()
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Share, contentDescription = "分享")
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("删除") },
+                onClick = {
+                    showMenu = false
+                    showDeleteDialog = true
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Delete, contentDescription = "删除")
+                }
+            )
+        }
+    }
+
+    // 重命名对话框
+    if (showRenameDialog) {
+        var newTitle by remember { mutableStateOf(message.title) }
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text("重命名对话") },
+            text = {
+                OutlinedTextField(
+                    value = newTitle,
+                    onValueChange = { newTitle = it },
+                    label = { Text("对话标题") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newTitle.isNotBlank()) {
+                            onRename(newTitle)
+                            Toast.makeText(context, "已重命名", Toast.LENGTH_SHORT).show()
+                        }
+                        showRenameDialog = false
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // 删除确认对话框
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("删除对话") },
+            text = { Text("确定要删除这个对话吗?此操作无法撤销。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete()
+                        Toast.makeText(context, "已删除", Toast.LENGTH_SHORT).show()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
 

@@ -53,12 +53,41 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         navController = findNavController(R.id.nav_host_fragment_content_main)
+        
+        // 设置底部导航栏
+        val bottomNavView = binding.appBarMain.bottomNavView
+        bottomNavView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_chat -> {
+                    navController.navigate(R.id.nav_chat)
+                    true
+                }
+                R.id.nav_history -> {
+                    navController.navigate(R.id.nav_history)
+                    true
+                }
+                R.id.nav_notes -> {
+                    navController.navigate(R.id.nav_notes)
+                    true
+                }
+                R.id.nav_settings -> {
+                    navController.navigate(R.id.nav_settings)
+                    true
+                }
+                else -> false
+            }
+        }
+        
+        // 监听导航变化,更新底部导航栏选中状态
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            bottomNavView.menu.findItem(destination.id)?.isChecked = true
+        }
+        
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.nav_chat,
                 R.id.nav_history,
                 R.id.nav_notes,
-                R.id.nav_category,
                 R.id.nav_settings
             ), drawerLayout
         )

@@ -1,6 +1,7 @@
 package com.zoup.android.chatextend.data.database.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -29,6 +30,9 @@ interface ChatMessageDao {
     @Update
     suspend fun updateMessage(message: ChatMessageEntity)
 
+    // 删除单条消息
+    @Delete
+    suspend fun deleteMessage(message: ChatMessageEntity)
 
     // 清空数据库
     @Query("DELETE FROM chat_message")

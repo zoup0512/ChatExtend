@@ -22,6 +22,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation.findNavController
 import com.zoup.android.chatextend.MainActivity
 import com.zoup.android.chatextend.R
@@ -29,6 +30,7 @@ import com.zoup.android.chatextend.data.database.AppDatabase
 import com.zoup.android.chatextend.data.repository.ChatMessageRepository
 import com.zoup.android.chatextend.utils.Constants
 import com.zoup.android.chatextend.utils.MessageIdManager
+import kotlinx.coroutines.launch
 
 class ChatFragment : Fragment() {
 
@@ -119,12 +121,19 @@ class ChatFragment : Fragment() {
             if (viewModel.chatStateFlow.value.isCollected) {
                 viewModel.collectChatMessages(viewModel.chatStateFlow.value.categoryId)
             } else {
-                val args = Bundle()
-                findNavController(root).navigate(R.id.nav_category, args)
+                // 显示快速分类对话框
+                showQuickCategoryDialog()
             }
         } else {
             Toast.makeText(requireContext(), "请先开始对话再收藏！", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showQuickCategoryDialog() {
+        // 简化实现:直接跳转到分类管理页面
+        // TODO: 后续可以优化为快速分类对话框
+        val args = Bundle()
+        findNavController(root).navigate(R.id.nav_category, args)
     }
 
     // 检查权限

@@ -9,6 +9,8 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.zoup.android.chatextend.MainActivity
@@ -62,7 +64,40 @@ class SettingsFragment : Fragment() {
             showThemeDialog()
         }
 
+        // 统计信息
+        val statisticsLayout = binding.statisticsLayout
+        statisticsLayout.setOnClickListener {
+            showStatisticsDialog()
+        }
+
         return root
+    }
+
+    private fun showStatisticsDialog() {
+        val composeView = androidx.compose.ui.platform.ComposeView(requireContext()).apply {
+            setContent {
+                androidx.compose.material3.MaterialTheme {
+                    val viewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.zoup.android.chatextend.ui.chat.ChatViewModel>(
+                        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                                val dao = com.zoup.android.chatextend.data.database.AppDatabase.getInstance(requireContext()).chatMessageDao()
+                                val repository = com.zoup.android.chatextend.data.repository.ChatMessageRepository(dao)
+                                return com.zoup.android.chatextend.ui.chat.ChatViewModel(repository) as T
+                            }
+                        }
+                    )
+                    val messages by viewModel.getAllHistoryMessages().collectAsState(initial = emptyList())
+                    
+                    com.zoup.android.chatextend.ui.settings.StatisticsScreen(messages = messages)
+                }
+            }
+        }
+        
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("使用统计")
+            .setView(composeView)
+            .setPositiveButton("关闭", null)
+            .show()
     }
 
     private fun updateThemeText(textView: TextView) {
